@@ -7,7 +7,7 @@ const cors = require("cors");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
-
+app.use(cors())
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   maxHttpBufferSize: 15 * 1024 * 1024, // 15MB
