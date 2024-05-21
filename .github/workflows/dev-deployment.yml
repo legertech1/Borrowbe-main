@@ -32,8 +32,6 @@ jobs:
           REMOTE_HOST: ${{ secrets.DEV_HOST }}
           REMOTE_USER: ${{ secrets.DEV_USERNAME }}
           TARGET: ${{ secrets.DEV_TARGET_DIR }}
-        with:
-          args: -avz --delete  # Add verbose output and other useful flags
 
       - name: Setup and restart application
         uses: appleboy/ssh-action@master
