@@ -129,7 +129,7 @@ router.get("/verify", async (req, res) => {
     }),
   });
   //redirect
-  res.redirect(process.env.FRONTEND_URI+ "/profile");
+  res.redirect(process.env.FRONTEND_URI+ "/verified");
 });
 
 router.post("/login", async (req, res) => {
