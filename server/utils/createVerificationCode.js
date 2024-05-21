@@ -11,9 +11,12 @@ module.exports = function (user, subject, email) {
     from: "noreply@borrowbe.com",
     to: email,
     subject: "Verification code " + subject,
-    html: `<p>Use the verification code provided below to ${subject}</p>
-    <p class="code">${code}</p>
-    <p>This code is valid for 5 minutes</p>
-    <p class="light">* if you did not request this code , we strongly recommend you reset your password.</p>`,
+    html: createEmailHtml({
+      content: `<p>Use the verification code provided below to ${subject}</p>
+      <p class="code">${code}</p>
+      <p>This code is valid for 5 minutes</p>
+      <p class="light">* if you did not request this code , we strongly recommend you reset your password.</p>`,
+      heading: "Verification code " + subject,
+    }),
   });
 };

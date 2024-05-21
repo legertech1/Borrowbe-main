@@ -1,9 +1,10 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const app = express();
+app.use(cors({ origin: process.env.FRONTEND_URI }));
 require("./db");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
@@ -22,7 +23,7 @@ io.on("connection", require("./server/chat"));
 app.use(express.json({ limit: "1000mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(__dirname + "/build"));
+
 app.use((req, res, next) => {
   req.country = req?.query?.country || "CA";
   next();

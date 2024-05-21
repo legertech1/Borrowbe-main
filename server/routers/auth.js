@@ -87,11 +87,10 @@ router.get("/verify", async (req, res) => {
     return res.status(401).send({ error: errors["invalid-token"] });
 
   // set user as verified
-  const user = await User.findOneAndUpdate(
-    { _id: verified.id },
-    { verified: true },
-    { new: true }
-  );
+  const user = await User.findOne({ _id: verified.id });
+  if (user.verified) return res.redirect(process.env.FRONTEND_URI + "/");
+  user.verified = true;
+  await user.save();
 
   //create authorization token
   const authorizationToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
@@ -129,7 +128,7 @@ router.get("/verify", async (req, res) => {
     }),
   });
   //redirect
-  res.redirect("/profile");
+  res.redirect(process.env.FRONTEND_URI + "/verified");
 });
 
 router.post("/login", async (req, res) => {
@@ -277,7 +276,7 @@ router.post("/reset-password", async (req, res) => {
   const user = await User.findOne({ _id: verified.id });
   if (!user) return res.status(401).send({ error: errors["user-not-found"] });
   //checking if user is verified
-  if (!user.verified) return res.redirect("/verify");
+  if (!user.verified) return res.redirect(process.env.FRONTEND_URI + "/verify");
 
   //check if password is different from old password
   const isMatch = await bcrypt.compare(password, user.password);
@@ -338,7 +337,7 @@ router.get("/google", (req, res) => {
     `&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}` +
     `&response_type=code` +
     `&scope=email profile`;
-  res.redirect(authUrl);
+  res.redirect(process.env.FRONTEND_URI + authUrl);
 });
 router.get("/google/callback", async (req, res) => {
   const { code } = req.query;
@@ -371,7 +370,7 @@ router.get("/google/callback", async (req, res) => {
       );
       res.cookie("auth", authorizationToken);
       //send data
-      return res.redirect("/");
+      return res.redirect(process.env.FRONTEND_URI + "/");
     }
     user = new User({
       customerID: await generateID("C"),
@@ -391,7 +390,7 @@ router.get("/google/callback", async (req, res) => {
     );
     res.cookie("auth", authorizationToken);
     //send data
-    return res.redirect("/");
+    return res.redirect(process.env.FRONTEND_URI + "/");
   } catch (error) {
     console.error(
       "Error exchanging authorization code for access token:",
@@ -403,7 +402,7 @@ router.get("/google/callback", async (req, res) => {
 router.get("/facebook", (req, res) => {
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=email&response_type=code&state=qfouihqewubqewui`;
 
-  res.redirect(authUrl);
+  res.redirect(process.env.FRONTEND_URI + authUrl);
 });
 
 router.get("/facebook/callback", async (req, res) => {
@@ -430,7 +429,7 @@ router.get("/facebook/callback", async (req, res) => {
     const profileData = await profileResponse.json();
 
     // Redirect user after successful authentication
-    res.redirect("/dashboard");
+    res.redirect(process.env.FRONTEND_URI + "/");
   } catch (error) {
     console.error("Facebook authentication error:", error);
     res.status(500).json({ error: "Failed to authenticate with Facebook" });
