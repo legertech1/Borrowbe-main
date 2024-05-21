@@ -22,7 +22,6 @@ jobs:
           username: ${{ secrets.DEV_USERNAME }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
-            mkdir -p ${{ secrets.DEV_TARGET_DIR }}
             sudo chown -R ${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_USERNAME }} ${{ secrets.DEV_TARGET_DIR }}
             sudo chmod -R 755 ${{ secrets.DEV_TARGET_DIR }}
 
