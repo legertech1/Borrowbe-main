@@ -1,4 +1,4 @@
-name: EC2-DEV-Dev
+name: EC2-DEV-Backend
 
 # Trigger deployment only on push to the development branch
 on:
