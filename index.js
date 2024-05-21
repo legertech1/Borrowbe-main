@@ -8,7 +8,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
 app.use(cors({
-  origin: '*', // Allow all origins; specify array or regex for specific origins
+  origin: 'https://dev.borrowbe.com', // Allow all origins; specify array or regex for specific origins
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
   credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
