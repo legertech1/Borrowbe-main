@@ -7,7 +7,12 @@ const cors = require("cors");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
-app.use(cors())
+app.use(cors({
+  origin: '*', // Allow all origins; specify array or regex for specific origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
+  credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
+}));
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   maxHttpBufferSize: 15 * 1024 * 1024, // 15MB
