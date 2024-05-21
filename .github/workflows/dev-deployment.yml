@@ -1,0 +1,41 @@
+name: EC2-DEV-Dev
+
+# Trigger deployment only on push to the development branch
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    name: Deploy to EC2 on master branch push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the files
+        uses: actions/checkout@v2
+
+      - name: Deploy to Server 1
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.DEV_HOST }}
+          REMOTE_USER: ${{ secrets.DEV_USERNAME }}
+          TARGET: ${{ secrets.DEV_TARGET_DIR }}
+
+  build:
+    name: Build
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEV_TARGET_DIR }}
+            pm2 stop 1
+            npm install
+            pm2 restart 1
