@@ -22,8 +22,8 @@ jobs:
           username: ${{ secrets.DEV_USERNAME }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
-            sudo chown -R ${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_USERNAME }} ${{ secrets.DEV_TARGET_DIR }}
-            sudo chmod -R 755 ${{ secrets.DEV_TARGET_DIR }}
+            sudo chown -R ${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_USERNAME }} ${{ secrets.PROD_TARGET_DIR }}
+            sudo chmod -R 755 ${{ secrets.PROD_TARGET_DIR }}
 
       - name: Deploy files to the server
         uses: easingthemes/ssh-deploy@main
@@ -40,6 +40,6 @@ jobs:
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
-            cd ${{ secrets.TARGET_DIR }}
+            cd ${{ secrets.PROD_TARGET_DIR }}
             npm install
             pm2 restart all
