@@ -187,11 +187,8 @@ router.post("/login", async (req, res) => {
     //set auth cookie
     res.cookie("auth", authorizationToken, {
   "secure": true, 
-        "path": "/", 
         "httpOnly": true, 
-        "hostOnly": true, 
-        "sameSite": false, 
-       "domain":"dev-api.borrowbe.com"
+       "domain":"dev.borrowbe.com"
 });
     //send data
     res.status(200).send(user);
