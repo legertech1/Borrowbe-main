@@ -186,7 +186,6 @@ router.post("/login", async (req, res) => {
   } else {
     //set auth cookie
     res.cookie("auth", authorizationToken);
-    console.log("authorizationToken",authorizationToken)
     //send data
     res.status(200).send(user);
   }
