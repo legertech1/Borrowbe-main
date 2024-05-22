@@ -36,14 +36,14 @@ const header = `
       p {
         text-align: left;
         margin: 12px 0;
-        font-size:18px
+        font-size:1.1rem;
 
       }
       p.light {
         color: #555;
       }
       p.code {
-        font-size: 28px;
+        font-size: 1.8rem;
         font-weight: 500;
         font-family: var(--font1);
         letter-spacing: 5px;
@@ -56,10 +56,10 @@ const header = `
         margin:16px 0;
       }
       h3 {
-        font-size: 20px;
+        font-size: 1.3rem;
       }
       h4 {
-        font-size: 18px;
+        font-size: 1.1rem;
       }
     </style>
   </head>
