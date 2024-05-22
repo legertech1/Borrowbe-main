@@ -185,7 +185,9 @@ router.post("/login", async (req, res) => {
     });
   } else {
     //set auth cookie
-    res.cookie("auth", authorizationToken);
+    res.cookie("auth", authorizationToken, {
+  httpOnly : false
+});
     //send data
     res.status(200).send(user);
   }
