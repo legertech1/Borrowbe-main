@@ -1,6 +1,6 @@
 name: EC2-PRODUCTION-BACKEND
 
-# Trigger deployment only on push to the development branch
+# Trigger deployment only on push to the main branch
 on:
   push:
     branches:
