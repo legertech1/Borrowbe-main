@@ -191,7 +191,7 @@ router.post("/login", async (req, res) => {
         "httpOnly": true, 
         "hostOnly": true, 
         "sameSite": false, 
- "domain" : "dev.borrowbe.com"
+       "domain":"dev-api.borrowbe.com"
 });
     //send data
     res.status(200).send(user);
