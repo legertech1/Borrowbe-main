@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URI }));
+app.use(cors({ origin: process.env.FRONTEND_URI,credentials: true }));
 require("./db");
 const cookieParser = require("cookie-parser");
 const { createServer } = require("http");
@@ -12,7 +12,11 @@ const memo = require("./server/memo");
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   maxHttpBufferSize: 15 * 1024 * 1024, // 15MB
-
+cors: {
+    origin: process.env.FRONTEND_URI,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
   /* options */
 });
 module.exports = io;

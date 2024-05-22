@@ -23,7 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 
 runScript.js
-
+.github/
 
 .env
 service_account.json
