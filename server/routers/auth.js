@@ -185,8 +185,11 @@ router.post("/login", async (req, res) => {
     });
   } else {
     //set auth cookie
-    res.cookie("auth", authorizationToken, {
-  "secure": false, 
+    res.cookie("auth", authorization token, {
+ secure: true, 
+        httpOnly: false, 
+        sameSite: 'None',
+        domain: 'https://dev.borrowbe.com' 
 });
     //send data
     res.status(200).send(user);
