@@ -185,7 +185,7 @@ router.post("/login", async (req, res) => {
     });
   } else {
     //set auth cookie
-    res.cookie("auth", authorization token, {
+    res.cookie("auth", authorizationToken, {
  secure: true, 
         httpOnly: false, 
         sameSite: 'None',
