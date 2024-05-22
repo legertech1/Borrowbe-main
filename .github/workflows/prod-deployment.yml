@@ -41,5 +41,7 @@ jobs:
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
             cd ${{ secrets.PROD_TARGET_DIR }}
+            chmod -R 755 package.json
+            chmod -R 755 package-lock.json
             npm install
             pm2 restart all
