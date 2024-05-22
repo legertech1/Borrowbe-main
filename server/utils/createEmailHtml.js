@@ -31,12 +31,12 @@ const header = `
       a {
         text-decoration: none;
         color: #2196f3 !important;
-        font-size:18px;
+        font-size:1.2rem;
       }
       p {
         text-align: left;
         margin: 12px 0;
-        font-size:1.1rem;
+        font-size:1rem;
 
       }
       p.light {
@@ -51,15 +51,15 @@ const header = `
       }
       h3, h4 {
         font-family: var(--font2);
-        font-weight: 500;
+        font-weight: 600;
         text-align: left;
         margin:16px 0;
       }
       h3 {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
       }
       h4 {
-        font-size: 1.1rem;
+        font-size: 1rem;
       }
     </style>
   </head>
