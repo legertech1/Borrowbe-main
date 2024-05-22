@@ -40,6 +40,6 @@ jobs:
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
-            cd ${{ secrets.TARGET_DIR }}
+            cd ${{ secrets.PROD_TARGET_DIR }}
             npm install
             pm2 restart all
