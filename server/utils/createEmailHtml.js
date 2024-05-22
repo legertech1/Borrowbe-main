@@ -35,7 +35,7 @@ const header = `
       }
       p {
         text-align: left;
-        margin: 10px 0;
+        margin: 12px 0;
         font-size:18px
 
       }
@@ -72,19 +72,22 @@ const header = `
   margin:auto;
   font-family: var(--font2);
   background:#2196f322;
-  padding:100px">
+  padding: 100px 0">
    
-    <div class="main" style="
-    padding: 50px;
-    width: 800px;
+  <div class="main" style="
+    padding: 3%;
+    max-width: 800px;
+    width:100%;
     box-sizing: border-box;
     background:white;
     margin:auto;
   ">
   <div class="logo" style="margin:auto;">
-  <img style="height: 60px;
+  <img style="width:100%;
+  max-width: 300px;
   margin: auto;
-  display: block;" src="https://borrowbe-dev.s3.ca-central-1.amazonaws.com/logo.jpg" alt="Borrowbe LOGO"/>
+  display: block;" 
+  src="https://borrowbe-dev.s3.ca-central-1.amazonaws.com/logo.jpg" alt="Borrowbe LOGO"/>
   </div>
 `;
 
@@ -93,8 +96,9 @@ const footer = `
     <div class="footer" style="
     align-items: start;
     background: #eee;
-    padding: 20px 50px;
-    width: 800px;
+    padding: 20px 3%;
+    max-width: 800px;
+    width:100%;
     background:#333;
     box-sizing: border-box;
     margin:auto;
