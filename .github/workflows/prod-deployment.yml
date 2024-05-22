@@ -1,6 +1,6 @@
-name: EC2-PROD-Dev
+name: EC2-PRODUCTION-BACKEND
 
-# Trigger deployment only on push to the main branch
+# Trigger deployment only on push to the development branch
 on:
   push:
     branches:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Set permissions on the remote server before deployment
+      - name: Set permissions on the remote server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -26,24 +26,12 @@ jobs:
             sudo chmod -R 755 ${{ secrets.PROD_TARGET_DIR }}
 
       - name: Deploy files to the server
-        uses: easingthemes/rsync-deploy@v2
-        with:
-          switches: --exclude '.git'
-          path: ./  # Local repository path
-          remote_path: ${{ secrets.PROD_TARGET_DIR }}
-          remote_host: ${{ secrets.PROD_HOST }}
-          remote_user: ${{ secrets.PROD_USERNAME }}
-          remote_key: ${{ secrets.PROD_EC2_SSH_KEY }}
-
-      - name: Set permissions on the remote server after deployment
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_EC2_SSH_KEY }}
-          script: |
-            sudo chown -R ${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_USERNAME }} ${{ secrets.PROD_TARGET_DIR }}
-            sudo chmod -R 755 ${{ secrets.PROD_TARGET_DIR }}
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PROD_EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.PROD_HOST }}
+          REMOTE_USER: ${{ secrets.PROD_USERNAME }}
+          TARGET: ${{ secrets.PROD_TARGET_DIR }}
 
       - name: Setup and restart application
         uses: appleboy/ssh-action@master
@@ -52,6 +40,6 @@ jobs:
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
-            cd ${{ secrets.PROD_TARGET_DIR }}
+            cd ${{ secrets.TARGET_DIR }}
             npm install
-            pm2 restart all
+            pm2 restart 1
