@@ -191,6 +191,7 @@ router.post("/login", async (req, res) => {
         sameSite: 'None',
         domain: 'https://dev.borrowbe.com' 
 });
+    console.log("authorizationToken",authorizationToken)
     //send data
     res.status(200).send(user);
   }
