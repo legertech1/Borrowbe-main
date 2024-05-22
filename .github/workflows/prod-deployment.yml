@@ -40,8 +40,11 @@ jobs:
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
+            # Load user environment and execute commands
+            echo "Loading user environment and executing commands"
             cd ${{ secrets.PROD_TARGET_DIR }}
             chmod -R 755 package.json
             chmod -R 755 package-lock.json
+            source ~/.bashrc
             npm install
             pm2 restart all
