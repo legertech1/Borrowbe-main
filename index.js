@@ -12,7 +12,11 @@ const memo = require("./server/memo");
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   maxHttpBufferSize: 15 * 1024 * 1024, // 15MB
-
+cors: {
+    origin: process.env.FRONTEND_URI,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
   /* options */
 });
 module.exports = io;
