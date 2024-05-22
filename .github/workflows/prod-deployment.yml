@@ -44,4 +44,3 @@ jobs:
             sudo chmod -R 755 package.json
             sudo chmod -R 755 package-lock.json
             npm install
-            pm2 restart all
