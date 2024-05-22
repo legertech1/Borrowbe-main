@@ -18,9 +18,9 @@ jobs:
       - name: Set permissions on the remote server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
             sudo chown -R ${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_USERNAME }} ${{ secrets.PROD_TARGET_DIR }}
             sudo chmod -R 755 ${{ secrets.PROD_TARGET_DIR }}
