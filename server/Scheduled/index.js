@@ -235,14 +235,14 @@ async function updateAd(ad, today) {
     _initialised.setHours(0, 0, 0, 0);
     const initialised = _initialised.getTime();
 
-    // if (initialised + ad.meta.duration * dayConstant <= today) {
-    //   if (ad.config.recurring) return useRecurring(ad);
-    //   return expireAd(ad);
-    // }
-    if (true) {
+    if (initialised + ad.meta.duration * dayConstant <= today) {
       if (ad.config.recurring) return await useRecurring(ad);
-      return await expireAd(ad, true);
+      return await expireAd(ad);
     }
+    // if (true) {
+    //   if (ad.config.recurring) return await useRecurring(ad);
+    //   return await expireAd(ad, true);
+    // }
     const featured =
       Number(ad?.config?.current?.addOns?.featured?.days || 0) +
       Number(ad?.config?.current?.package?.item?.featured || 0);
