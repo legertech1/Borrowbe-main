@@ -43,6 +43,9 @@ jobs:
             # Load user environment and execute commands
             echo "Loading user environment and executing commands"
             cd ${{ secrets.PROD_TARGET_DIR }}
+            ~/.nvm/nvm.sh install v18.20.3
+            node -v
+            pm2 -v
             chmod -R 755 package.json
             chmod -R 755 package-lock.json
             source ~/.bashrc
