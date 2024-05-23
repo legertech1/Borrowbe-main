@@ -43,6 +43,11 @@ jobs:
             # Load user environment and execute commands
             echo "Loading user environment and executing commands"
             cd ${{ secrets.PROD_TARGET_DIR }}
+            # Ensure nvm is available and usable in the script
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
             nvm use 18
+            export PATH=$NVM_BIN:$PATH  # Add Node.js binaries to PATH
             npm install
             pm2 restart all
