@@ -75,7 +75,7 @@ const header = `
   padding: 100px 0">
    
   <div class="main" style="
-    padding: 3%;
+    padding: 4%;
     max-width: 800px;
     width:100%;
     box-sizing: border-box;
@@ -96,7 +96,7 @@ const footer = `
     <div class="footer" style="
     align-items: start;
     background: #eee;
-    padding: 20px 3%;
+    padding: 20px 4%;
     max-width: 800px;
     width:100%;
     background:#333;

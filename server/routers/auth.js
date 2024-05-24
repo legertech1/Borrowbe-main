@@ -151,6 +151,12 @@ router.post("/login", async (req, res) => {
   if (user.accountLocked)
     return res.status(401).send({ error: errors["account-locked"] });
 
+  if (!user.password)
+    return res
+      .status(403)
+      .send(
+        "Password not created yet. please use Google or Facebook to login."
+      );
   //check password
   const isMatch = await bcrypt.compare(password, user.password);
   //increase risk in case of wrong password and send error
@@ -337,7 +343,7 @@ router.get("/google", (req, res) => {
     `&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}` +
     `&response_type=code` +
     `&scope=email profile`;
-  res.redirect(process.env.FRONTEND_URI + authUrl);
+  res.redirect(authUrl);
 });
 router.get("/google/callback", async (req, res) => {
   const { code } = req.query;

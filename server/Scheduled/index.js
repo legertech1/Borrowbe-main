@@ -239,10 +239,7 @@ async function updateAd(ad, today) {
       if (ad.config.recurring) return await useRecurring(ad);
       return await expireAd(ad);
     }
-    // if (true) {
-    //   if (ad.config.recurring) return await useRecurring(ad);
-    //   return await expireAd(ad, true);
-    // }
+  
     const featured =
       Number(ad?.config?.current?.addOns?.featured?.days || 0) +
       Number(ad?.config?.current?.package?.item?.featured || 0);
