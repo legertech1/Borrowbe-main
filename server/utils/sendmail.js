@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
 async function sendMail({ from, to, subject, text, html }) {
   try {
     const res = await transporter.sendMail({
-      from: 'noreply@borrowbe.com',
+      from: 'Borrowbe <noreply@borrowbe.com>',
       to,
       subject,
       text,
