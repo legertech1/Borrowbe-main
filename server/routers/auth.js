@@ -144,8 +144,34 @@ router.post("/login", async (req, res) => {
   if (!user) return res.status(401).send({ error: errors["user-not-found"] });
 
   //check if verified
-  if (!user.verified)
-    return res.status(401).send({ error: errors["not-verified"] });
+  if (!user.verified) {
+    const verificationToken = jwt.sign(
+      { email, id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    sendMail({
+      from: "noreply@borrowbe.com",
+      to: email,
+      subject: "Verify your email address",
+      html: createEmailHtml({
+        content: `<p>Hey ${user.firstName},
+        please use the link provided below to verify your email address and
+        start using Borrowbe.
+      </p>
+      <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
+      <p>This link is valid for an hour.</p>`,
+        heading: "Verify your email address",
+      }),
+    });
+    return res
+      .status(401)
+      .send({
+        error:
+          "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
+      });
+  }
 
   //check if under lockdown
   if (user.accountLocked)
