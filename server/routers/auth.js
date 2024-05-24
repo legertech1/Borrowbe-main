@@ -146,7 +146,7 @@ router.post("/login", async (req, res) => {
   //check if verified
   if (!user.verified) {
     const verificationToken = jwt.sign(
-      { email, id: user._id },
+      { email, id: user._id, time: Date.now() },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -165,12 +165,10 @@ router.post("/login", async (req, res) => {
         heading: "Verify your email address",
       }),
     });
-    return res
-      .status(401)
-      .send({
-        error:
-          "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
-      });
+    return res.status(401).send({
+      error:
+        "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
+    });
   }
 
   //check if under lockdown
@@ -204,7 +202,7 @@ router.post("/login", async (req, res) => {
   }
   //create token
   const authorizationToken = jwt.sign(
-    { id: user._id },
+    { id: user._id, time: Date.now() },
     process.env.JWT_SECRET,
     {
       expiresIn: "30d",
@@ -266,7 +264,7 @@ router.get("/forgot-password/:email", async (req, res) => {
   if (!user) return res.status(401).send({ error: errors["user-not-found"] });
   //create verification token
   const verificationToken = jwt.sign(
-    { email, id: user._id },
+    { email, id: user._id, time: Date.now() },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -394,7 +392,7 @@ router.get("/google/callback", async (req, res) => {
     let user = await User?.findOne({ email: decoded.email });
     if (user && user?._id) {
       const authorizationToken = jwt.sign(
-        { id: user._id },
+        { id: user._id, time: Date.now() },
         process.env.JWT_SECRET,
         {
           expiresIn: "30d",
@@ -414,7 +412,7 @@ router.get("/google/callback", async (req, res) => {
     });
     await user.save();
     const authorizationToken = jwt.sign(
-      { id: user._id },
+      { id: user._id, time: Date.now() },
       process.env.JWT_SECRET,
       {
         expiresIn: "30d",
