@@ -1,5 +1,6 @@
 const { Statistics } = require("../models/AdStatistics");
 module.exports = async function updateClick(record, listing, userId) {
+  if (!record) return;
   try {
     if (!record.clicks) record.clicks = {};
     if (!record.clicks[listing._id]) {

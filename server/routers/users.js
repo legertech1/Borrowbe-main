@@ -91,6 +91,10 @@ router.get("/:id", async (req, res) => {
 });
 
 router.use(authorize);
+router.get("/get-status/:id", async (req, res) => {
+  res.send({ active: memo.check(req.params.id) });
+});
+
 router.put("/:id", async (req, res) => {
   try {
     const id = req.params.id;

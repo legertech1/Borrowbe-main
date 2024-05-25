@@ -1,0 +1,53 @@
+name: EC2-PRODUCTION-BACKEND
+
+# Trigger deployment only on push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy and Setup on EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set permissions on the remote server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          script: |
+            sudo chown -R ${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_USERNAME }} ${{ secrets.PROD_TARGET_DIR }}
+            sudo chmod -R 755 ${{ secrets.PROD_TARGET_DIR }}
+
+      - name: Deploy files to the server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PROD_EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.PROD_HOST }}
+          REMOTE_USER: ${{ secrets.PROD_USERNAME }}
+          TARGET: ${{ secrets.PROD_TARGET_DIR }}
+
+      - name: Setup and restart application
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          script: |
+            # Load user environment and execute commands
+            echo "Loading user environment and executing commands"
+            cd ${{ secrets.PROD_TARGET_DIR }}
+            # Ensure nvm is available and usable in the script
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+            nvm use 18
+            export PATH=$NVM_BIN:$PATH  # Add Node.js binaries to PATH
+            npm install
+            pm2 restart all

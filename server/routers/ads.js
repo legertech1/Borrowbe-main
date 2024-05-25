@@ -109,11 +109,11 @@ router.post("/post-ad", authorize, async (req, res) => {
       return res.status(400).send(errors["invalid-details"]);
     try {
       if (
-        !verifyCoordinates(
+        !(await verifyCoordinates(
           ad.location.coordinates.lat,
           ad.location.coordinates.long,
           payment.country
-        )
+        ))
       )
         return res.status(400).send(errors["invalid-details"]);
     } catch (err) {
@@ -208,11 +208,11 @@ router.post("/relist", authorize, async (req, res) => {
       return res.status(400).send(errors["invalid-details"]);
     try {
       if (
-        !verifyCoordinates(
+        !(await verifyCoordinates(
           listing.location.coordinates.lat,
           listing.location.coordinates.long,
           payment.country
-        )
+        ))
       )
         return res.status(400).send(errors["invalid-details"]);
     } catch (err) {
@@ -265,11 +265,11 @@ router.put("/:id", authorize, async (req, res) => {
     return res.status(400).send(errors["invalid-details"]);
   try {
     if (
-      !verifyCoordinates(
+      !(await verifyCoordinates(
         body.location.coordinates.lat,
         body.location.coordinates.long,
         ad.meta.country
-      )
+      ))
     )
       return res.status(400).send(errors["invalid-details"]);
   } catch (err) {

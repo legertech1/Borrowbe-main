@@ -110,8 +110,13 @@ router.get("/nearest", async (req, res) => {
 // find nearest location by lat long and google map api
 router.get("/find-my-location", async (req, res) => {
   const { lat, long, type } = req.query;
-  if (!verifyCoordinates(lat, long, req.country))
+
+  if (
+    !(await verifyCoordinates(lat, long, "CA")) &&
+    !(await verifyCoordinates(lat, long, "US"))
+  ) {
     return res.status(400).send("bad request");
+  }
 
   let url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${process.env.REACT_APP_MAP_API_KEY}`;
   const response = await axios.get(url);
@@ -192,7 +197,6 @@ const fetchCities = async (province) => {
     }
   );
   const cityResults = response.data.results;
-
 
   for (const city of cityResults) {
     const data = await axios.get(

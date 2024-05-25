@@ -144,13 +144,43 @@ router.post("/login", async (req, res) => {
   if (!user) return res.status(401).send({ error: errors["user-not-found"] });
 
   //check if verified
-  if (!user.verified)
-    return res.status(401).send({ error: errors["not-verified"] });
+  if (!user.verified) {
+    const verificationToken = jwt.sign(
+      { email, id: user._id, time: Date.now() },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    sendMail({
+      from: "noreply@borrowbe.com",
+      to: email,
+      subject: "Verify your email address",
+      html: createEmailHtml({
+        content: `<p>Hey ${user.firstName},
+        please use the link provided below to verify your email address and
+        start using Borrowbe.
+      </p>
+      <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
+      <p>This link is valid for an hour.</p>`,
+        heading: "Verify your email address",
+      }),
+    });
+    return res.status(401).send({
+      error:
+        "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
+    });
+  }
 
   //check if under lockdown
   if (user.accountLocked)
     return res.status(401).send({ error: errors["account-locked"] });
 
+  if (!user.password)
+    return res
+      .status(403)
+      .send(
+        "Password not created yet. please use Google or Facebook to login."
+      );
   //check password
   const isMatch = await bcrypt.compare(password, user.password);
   //increase risk in case of wrong password and send error
@@ -172,7 +202,7 @@ router.post("/login", async (req, res) => {
   }
   //create token
   const authorizationToken = jwt.sign(
-    { id: user._id },
+    { id: user._id, time: Date.now() },
     process.env.JWT_SECRET,
     {
       expiresIn: "30d",
@@ -234,7 +264,7 @@ router.get("/forgot-password/:email", async (req, res) => {
   if (!user) return res.status(401).send({ error: errors["user-not-found"] });
   //create verification token
   const verificationToken = jwt.sign(
-    { email, id: user._id },
+    { email, id: user._id, time: Date.now() },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -337,7 +367,7 @@ router.get("/google", (req, res) => {
     `&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}` +
     `&response_type=code` +
     `&scope=email profile`;
-  res.redirect(process.env.FRONTEND_URI + authUrl);
+  res.redirect(authUrl);
 });
 router.get("/google/callback", async (req, res) => {
   const { code } = req.query;
@@ -362,7 +392,7 @@ router.get("/google/callback", async (req, res) => {
     let user = await User?.findOne({ email: decoded.email });
     if (user && user?._id) {
       const authorizationToken = jwt.sign(
-        { id: user._id },
+        { id: user._id, time: Date.now() },
         process.env.JWT_SECRET,
         {
           expiresIn: "30d",
@@ -382,7 +412,7 @@ router.get("/google/callback", async (req, res) => {
     });
     await user.save();
     const authorizationToken = jwt.sign(
-      { id: user._id },
+      { id: user._id, time: Date.now() },
       process.env.JWT_SECRET,
       {
         expiresIn: "30d",

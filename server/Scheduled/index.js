@@ -235,14 +235,15 @@ async function updateAd(ad, today) {
     _initialised.setHours(0, 0, 0, 0);
     const initialised = _initialised.getTime();
 
-    // if (initialised + ad.meta.duration * dayConstant <= today) {
-    //   if (ad.config.recurring) return useRecurring(ad);
-    //   return expireAd(ad);
+    // if (true) {
+    //   if (ad.config.recurring) return await useRecurring(ad);
+    //   return await expireAd(ad);
     // }
-    if (true) {
+    if (initialised + ad.meta.duration * dayConstant <= today) {
       if (ad.config.recurring) return await useRecurring(ad);
-      return await expireAd(ad, true);
+      return await expireAd(ad);
     }
+
     const featured =
       Number(ad?.config?.current?.addOns?.featured?.days || 0) +
       Number(ad?.config?.current?.package?.item?.featured || 0);
@@ -311,7 +312,7 @@ async function updateStats() {
 async function processBatch(batch, today) {
   // Process each document and filter out any null results
   const operations = await Promise.all(batch.map((ad) => updateAd(ad, today)));
-  const validOperations = operations.filter((op) => op !== null);
+  const validOperations = operations.filter((op) => op != null);
 
   if (validOperations.length > 0) {
     await Ad.bulkWrite(validOperations);
