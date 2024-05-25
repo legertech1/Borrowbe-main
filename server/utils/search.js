@@ -28,7 +28,12 @@ module.exports = async function ({
   restrictCountry,
   country,
 }) {
-  query = removeSlashes(query);
+  if (query[0] == "/") {
+    query[0] == "";
+  }
+  if (query[query.length - 1] == "/") {
+    query[query.length - 1] == "";
+  }
   const locationQuery = location?.radius
     ? createGeoConstructQuery(location)
     : createLocationQuery(location);
