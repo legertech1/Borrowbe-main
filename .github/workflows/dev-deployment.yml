@@ -42,4 +42,4 @@ jobs:
           script: |
             cd ${{ secrets.TARGET_DIR }}
             npm install
-            pm2 restart 1
+            pm2 restart all
