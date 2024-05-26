@@ -11,20 +11,18 @@ const header = `
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap");
       @import url("https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:ital,wght@0,400..800;1,400..800&display=swap");
 
-      :root {
-        --font1: Montserrat, Sans-serif;
-        --font2: "Wix Madefor Text", sans-serif;
-      }
+  
       body {
        
        
-        font-family: var(--font2);
+        font-family: "Wix Madefor Text", sans-serif;
+        color:black !important;
       
       }
       h1 {
-        font-weight: 500;
+        font-weight: 600 !important;
         text-align: center;
-        font-family: var(--font1);
+        font-family: Montserrat, Sans-serif;
         margin: 20px 0;
         font-size:32px
       }
@@ -43,14 +41,14 @@ const header = `
         color: #555;
       }
       p.code {
-        font-size: 1.8rem;
-        font-weight: 500;
-        font-family: var(--font1);
+        font-size: 2rem;
+        font-weight: 600 !important;
+        font-family: Montserrat, Sans-serif;
         letter-spacing: 5px;
-        color: #2196f3;
+        color: #2196f3 !important;
       }
       h3, h4 {
-        font-family: var(--font2);
+        font-family: "Wix Madefor Text", sans-serif;
         font-weight: 600;
         text-align: left;
         margin:16px 0;
@@ -70,7 +68,7 @@ const header = `
   width: 100%;
   box-sizing:border-box;
   margin:auto;
-  font-family: var(--font2);
+  font-family: 'Wix Madefor Text', sans-serif;
   background:#2196f322;
   padding: 100px 0">
    

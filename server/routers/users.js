@@ -246,20 +246,20 @@ router.post("/change-email", async (req, res) => {
   const { code1, email1, code2, email2, password } = req.body;
   let vc = memo.getVerificationCode(req.user._id)["to change your email"];
   if (!vc) return res.status(401).send("Unauthorised");
-  if (code1 != vc.code || vc.expiresAt > Date.now())
+  if (code1 != vc.code || vc.expiresAt < Date.now())
     return res
       .status(400)
       .send("Incorrect verification code. please try again.");
   if (vc.email != email1) return res.status(401).send("Unauthorised");
   vc = memo.getVerificationCode(req.user._id)["to verify your new email"];
   if (!vc) return res.status(401).send("Unauthorised");
-  if (code2 != vc.code || vc.expiresAt > Date.now())
+  if (code2 != vc.code || vc.expiresAt < Date.now())
     return res
       .status(400)
       .send("Incorrect verification code. please try again.");
   if (vc.email != email2) return res.status(401).send("Unauthorised");
   if (!password) return res.status(400).send("incorrect details");
-  const isCorrectPass = await bcrypt.compare(password, user.password);
+  const isCorrectPass = await bcrypt.compare(password, req.user.password);
   if (!isCorrectPass) return res.status(401).send("Incorrect Password");
   if (req.user?.email != email1)
     return res.status(400).send("incorrect details");
