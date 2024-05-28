@@ -2,7 +2,7 @@ module.exports = {
   batchSize: 1000,
   adsPerReq: 30,
   defaultAdSort: { "meta.listingRank": -1 },
-  defaultSelection: "",
+  defaultSelection: {},
   defaultQuery: { "meta.status": "active" },
   defaultNotificationConfig: {
     "account updates": true,

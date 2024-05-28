@@ -346,8 +346,22 @@ router.post("/search", async (req, res) => {
   }
   const { results, total, page } = await search({
     ...req.body,
-    select:
-      "thumbnails _id title description price term location meta location listingID user tax config tags createdAt",
+    select: {
+      thumbnails: 1,
+      _id: 1,
+      title: 1,
+      description: 1,
+      price: 1,
+      term: 1,
+      location: 1,
+      meta: 1,
+      listingID: 1,
+      user: 1,
+      tax: 1,
+      config: 1,
+      tags: 1,
+      createdAt: 1,
+    },
     country: req.country,
   });
 

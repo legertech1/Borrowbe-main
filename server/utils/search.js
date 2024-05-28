@@ -43,32 +43,65 @@ module.exports = async function ({
     def["meta.status"] = /.*/;
   }
 
-  const databaseQuery = {
-    ...def,
-    ...locationQuery,
-    "meta.category": category == "All Categories" ? /.*/ : category || /.*/,
-    "meta.subCategory": subCategory || /.*/,
-    $or: [
-      { title: new RegExp(query, "i") },
-      { description: new RegExp(query, "i") },
-      { tags: { $in: [query] } },
-      { listingID: query },
-    ],
-    ...filters,
-    ...additional,
-    "meta.country": restrictCountry ? country : /.*/,
-  };
+  const resultPipeline = [];
 
-  const total = count ? await Ad.countDocuments(databaseQuery) : null;
+  // Add $search stage if query is provided
+  if (query) {
+    const fuzzySearchQuery = {
+      index: "default",
+      text: {
+        query: query,
+        path: ["title", "description", "tags"],
+        fuzzy: {
+          maxEdits: 2, // Adjust as needed
+          maxExpansions: 100, // Adjust as needed
+        },
+      },
+    };
+
+    resultPipeline.push({ $search: fuzzySearchQuery });
+  }
+
+  // Add $match stage
+  const matchStage = {
+    $match: {
+      ...def,
+      ...locationQuery,
+      "meta.category":
+        category === "All Categories" ? { $exists: true } : category,
+      "meta.subCategory": subCategory || { $exists: true },
+      "meta.country": restrictCountry ? country : { $exists: true },
+      ...filters,
+      ...additional,
+    },
+  };
+  resultPipeline.push(matchStage);
+
+  // Add $sort, $skip, $limit, and $project stages
+  resultPipeline.push({
+    $sort: sort || defaultAdSort,
+  });
+  resultPipeline.push({
+    $skip: (page - 1) * (limit || adsPerReq),
+  });
+  resultPipeline.push({
+    $limit: limit || adsPerReq,
+  });
+  const projectStage = { $project: select || defaultSelection };
+  resultPipeline.push(projectStage);
+
+  // Execute the result aggregation pipeline
+  const results = await Ad.aggregate(resultPipeline).exec();
+
+  // Count total documents using a separate aggregation pipeline
+  const countPipeline = [matchStage, { $count: "total" }];
+  const countResult = await Ad.aggregate(countPipeline).exec();
+  const total = countResult.length > 0 ? countResult[0].total : 0;
   const pages = total / (limit || adsPerReq);
+
+  // Adjust page number if random is true and ensure it's within valid range
   if (random) page = getRandomNumber(1, pages - 1);
   if (page < 1) page = 1;
-  const results = await Ad.find(databaseQuery)
-    .sort(sort || defaultAdSort)
-    .limit(limit || adsPerReq)
-    .skip((page - 1) * (limit || adsPerReq))
-    .select(select || defaultSelection)
-    .lean();
 
   if (analytics) {
     let stats = await Statistics.find({
