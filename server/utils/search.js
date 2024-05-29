@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const {
   defaultQuery,
   defaultSelection,
@@ -61,6 +62,26 @@ module.exports = async function ({
 
     resultPipeline.push({ $search: fuzzySearchQuery });
   }
+  try {
+    if (additional.user) {
+      const arr = [];
+      for (let i of additional.user) {
+        arr.push(new mongoose.Types.ObjectId(i));
+      }
+
+      additional.user = { $in: arr };
+    }
+
+    if (additional._id) {
+      const arr = [];
+      for (let i of additional._id) {
+        arr.push(new mongoose.Types.ObjectId(i));
+      }
+      additional._id = { $in: arr };
+    }
+  } catch (err) {
+    res.status(400).send("request syntax error");
+  }
 
   // Add $match stage
   const matchStage = {
@@ -77,18 +98,35 @@ module.exports = async function ({
   };
   resultPipeline.push(matchStage);
 
+  if (additional._id) {
+    const sortOrder = additional._id.$in.map((id) => id.toString());
+    resultPipeline.push({
+      $addFields: {
+        sortOrderIndex: {
+          $indexOfArray: [sortOrder, { $toString: "$_id" }],
+        },
+      },
+    });
+    resultPipeline.push({ $sort: { sortOrderIndex: -1 } });
+  }
   // Add $sort, $skip, $limit, and $project stages
-  resultPipeline.push({
-    $sort: sort || defaultAdSort,
-  });
+  if (sort !== null && !additional._id) {
+    resultPipeline.push({
+      $sort: sort || defaultAdSort,
+    });
+  }
+
   resultPipeline.push({
     $skip: (page - 1) * (limit || adsPerReq),
   });
   resultPipeline.push({
     $limit: limit || adsPerReq,
   });
-  const projectStage = { $project: select || defaultSelection };
-  resultPipeline.push(projectStage);
+  if (select) {
+    const projectStage = { $project: select || {} };
+    resultPipeline.push(projectStage);
+  }
+
 
   // Execute the result aggregation pipeline
   const results = await Ad.aggregate(resultPipeline).exec();
