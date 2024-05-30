@@ -33,17 +33,8 @@ async function sendPushNotification(notification, to, from, adId) {
     const toUser = await User.findById(to);
     const fromUser = await User.findById(from);
     const ad = await Ad.findById(adId);
-
     if (!toUser || !toUser?.deviceTokens) return;
-
-    // let payload = {
-    //   tokens: toUser.deviceTokens,
-    //   notification: {
-    //     title: fromUser?.firstName + " " + fromUser?.lastName,
-    //     body: notification.message,
-    //   },
-    // };
-
+    let tokens = toUser.deviceTokens;
     let title = ad.title.slice(0, 20);
     let body =
       notification.message.slice(0, 40) +
@@ -52,24 +43,28 @@ async function sendPushNotification(notification, to, from, adId) {
       " " +
       fromUser?.lastName;
 
+    return await sendFCMNotification(tokens, { title, body });
+  } catch (error) {
+    console.log("error: ", error);
+  }
+}
+
+const sendFCMNotification = async (tokens, { title, body }) => {
+  try {
     let payload = {
-      tokens: toUser.deviceTokens,
+      tokens: tokens,
       notification: {
         title: title,
         body: body,
-        // imageUrl: "https://www.gstatic.com/webp/gallery/2.jpg",
       },
       apns: {
         payload: {
           aps: {
             alert: {
               title: title,
-              // subtitle: "Honda Civic 2021",
               body: body,
-              // launchImage: "https://www.gstatic.com/webp/gallery/1.jpg",
             },
             sound: "default",
-            // badge: 1,
           },
         },
       },
@@ -77,19 +72,19 @@ async function sendPushNotification(notification, to, from, adId) {
         notification: {
           title: title,
           body: body,
-          // imageUrl: "https://www.gstatic.com/webp/gallery/2.jpg",
-          // notificationCount: 1,
           sound: "default",
-          // icon: "ic_launcher",
         },
       },
     };
 
     let r = await admin.messaging().sendMulticast(payload);
     console.log("r: ", r);
+
+    return r;
   } catch (error) {
     console.log("error: ", error);
   }
-}
+};
 
 module.exports.sendPushNotification = sendPushNotification;
+module.exports.sendFCMNotification = sendFCMNotification;
