@@ -127,7 +127,7 @@ module.exports = async function ({
     resultPipeline.push(projectStage);
   }
 
-
+  
   // Execute the result aggregation pipeline
   const results = await Ad.aggregate(resultPipeline).exec();
 
