@@ -4,6 +4,7 @@ const { createHash, verifyHash } = require("../utils/processHashes");
 const generateID = require("../utils/generateID");
 const { EjectedAd } = require("../models/EjectedAd");
 const sendNotification = require("../utils/sendNotification");
+const { sendFCMNotification } = require("../utils/sendNotification");
 const memo = require("../memo");
 const { User } = require("../models/User");
 const { Statistics } = require("../models/AdStatistics");
@@ -86,7 +87,11 @@ async function expireAd(ad, returnUpdate = false) {
     },
     ad.user
   );
-  if (ad.config.recurring)
+  sendFCMNotification(req.user.deviceTokens, {
+    title: "Ad Expired",
+    body: "Your ad with ID " + ad.listingID + " has expired.",
+  });
+  if (ad.config.recurring) {
     sendNotification(
       {
         link: "/profile",
@@ -96,6 +101,13 @@ async function expireAd(ad, returnUpdate = false) {
       },
       ad.user
     );
+    sendFCMNotification(req.user.deviceTokens, {
+      title: "Auto-relist Off",
+      body:
+        "Auto-relist has been turned off for your ad with ID " + ad.listingID,
+    });
+  }
+
   ad.config.recurring = false;
   ad.meta.hash = createHash(ad.meta._doc);
   ad.config.hash = createHash(ad.config);
@@ -181,6 +193,15 @@ async function useRecurring(ad) {
         },
         ad.user
       );
+      sendFCMNotification(req.user.deviceTokens, {
+        title: "Ad Relisted",
+        body:
+          "Your ad with ID " +
+          ad.listingID +
+          " has been relisted automatically. An amount of $" +
+          total +
+          " has been deducted from your Borrowbe balance.",
+      });
     },
     onFailure: async function () {
       sendNotification(
@@ -194,6 +215,13 @@ async function useRecurring(ad) {
         },
         ad.user
       );
+      sendFCMNotification(req.user.deviceTokens, {
+        title: "Auto-relist Failed",
+        body:
+          "Your ad with ID " +
+          ad.listingID +
+          " could not be automatically relisted due to an error.",
+      });
       return expireAd(ad);
     },
   });

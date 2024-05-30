@@ -33,17 +33,8 @@ async function sendPushNotification(notification, to, from, adId) {
     const toUser = await User.findById(to);
     const fromUser = await User.findById(from);
     const ad = await Ad.findById(adId);
-
     if (!toUser || !toUser?.deviceTokens) return;
-
-    // let payload = {
-    //   tokens: toUser.deviceTokens,
-    //   notification: {
-    //     title: fromUser?.firstName + " " + fromUser?.lastName,
-    //     body: notification.message,
-    //   },
-    // };
-
+    let tokens = toUser.deviceTokens;
     let title = ad.title.slice(0, 20);
     let body =
       notification.message.slice(0, 40) +
@@ -52,24 +43,47 @@ async function sendPushNotification(notification, to, from, adId) {
       " " +
       fromUser?.lastName;
 
+    return await sendFCMNotification(tokens, { title, body });
+  } catch (error) {
+    console.log("error: ", error);
+  }
+}
+
+const sendFCMNotification = async (rawTokens, { title, body }) => {
+  let tokens = [];
+
+  // deviceTokens: [
+  //   {
+  //     deviceUID: '21902229d7eaa789',
+  //     token: 'dCJJTv0-RyeYC5l4msV4rM:APA91bEkd3GDKK00DVpjvP5AgyWBCJfIvjmEBRJpJn-1PK5qNUsHRAVvR5TM0mEoVOC5fvSQotlEJBqwm1zdKMrW7VRlPwxGB9SNy0_hZ-EHCU1L8W4Uumn2rwuhol9Uwb75AuToqpHU',
+  //     _id: new ObjectId("665877d5dc39949ec5c6d221")
+  //   }
+  // ]
+
+  // if rawTokens contains array of strings then do nothing
+  if (typeof rawTokens[0] === "string") {
+    tokens = rawTokens;
+  } else {
+    // if rawTokens contains array of objects then extract token from each object
+    tokens = rawTokens.map((token) => token.token);
+  }
+  console.log("tokens: ", tokens);
+
+  try {
     let payload = {
-      tokens: toUser.deviceTokens,
+      tokens: tokens,
       notification: {
         title: title,
         body: body,
-        // imageUrl: "https://www.gstatic.com/webp/gallery/2.jpg",
       },
       apns: {
         payload: {
           aps: {
             alert: {
               title: title,
-              // subtitle: "Honda Civic 2021",
               body: body,
-              // launchImage: "https://www.gstatic.com/webp/gallery/1.jpg",
             },
             sound: "default",
-            // badge: 1,
           },
         },
       },
@@ -77,19 +91,19 @@ async function sendPushNotification(notification, to, from, adId) {
         notification: {
           title: title,
           body: body,
-          // imageUrl: "https://www.gstatic.com/webp/gallery/2.jpg",
-          // notificationCount: 1,
           sound: "default",
-          // icon: "ic_launcher",
         },
       },
     };
 
     let r = await admin.messaging().sendMulticast(payload);
     console.log("r: ", r);
+
+    return r;
   } catch (error) {
     console.log("error: ", error);
   }
-}
+};
 
 module.exports.sendPushNotification = sendPushNotification;
+module.exports.sendFCMNotification = sendFCMNotification;

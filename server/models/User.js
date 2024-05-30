@@ -15,14 +15,12 @@ const businessInfoSchema = new mongoose.Schema({
   phone: String,
   email: String,
 });
-const addressSchema = new mongoose.Schema(
-  {
-    line1: String,
-    city: String,
-    state: String,
-    postal_code: String,
-  }
-);
+const addressSchema = new mongoose.Schema({
+  line1: String,
+  city: String,
+  state: String,
+  postal_code: String,
+});
 const infoSchema = new mongoose.Schema({
   phone: {
     type: String,
@@ -36,6 +34,17 @@ const infoSchema = new mongoose.Schema({
 
   nickname: {
     type: String,
+  },
+});
+
+const DeviceTokenSchema = new mongoose.Schema({
+  deviceUID: {
+    type: String,
+    required: true,
+  },
+  token: {
+    type: String,
+    required: true,
   },
 });
 
@@ -92,7 +101,7 @@ const userSchema = new mongoose.Schema(
       },
     },
     BusinessInfo: { type: businessInfoSchema, default: {} },
-    deviceTokens: [String],
+    deviceTokens: [DeviceTokenSchema],
     config: {
       type: configSchema,
       required: true,
