@@ -311,6 +311,11 @@ router.post("/save-device-token", async (req, res) => {
   try {
     const userId = req.user._id;
     const { token, deviceUID } = req.body;
+
+    if (!token || !deviceUID) {
+      return res.status(400).send("Bad request");
+    }
+
     const filter = { _id: userId, "deviceTokens.deviceUID": deviceUID };
     const update = {
       $set: { "deviceTokens.$.token": token },

@@ -40,11 +40,11 @@ const infoSchema = new mongoose.Schema({
 const DeviceTokenSchema = new mongoose.Schema({
   deviceUID: {
     type: String,
-    required: true,
+    required: false,
   },
   token: {
     type: String,
-    required: true,
+    required: false,
   },
 });
 
