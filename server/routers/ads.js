@@ -15,6 +15,7 @@ const { Category } = require("../models/Category");
 const search = require("../utils/search");
 const { uploadImage, deleteImage } = require("../AWS");
 const sendNotification = require("../utils/sendNotification");
+const { sendFCMNotification } = require("../utils/sendNotification");
 const sendUpdate = require("../utils/sendUpdate");
 const updateImpressions = require("../utils/updateImpressions");
 const updateClick = require("../utils/updateClick");
@@ -167,11 +168,17 @@ router.post("/post-ad", authorize, async (req, res) => {
     sendNotification(
       {
         image: listing.thumbnails[0],
+
         content: "Your ad is Live now!\n Click here to view.",
+
         link: "/listing/" + listing._id,
       },
       req.user._id
     );
+    sendFCMNotification(req.user.deviceTokens, {
+      title: "Your ad is Live now!",
+      body: listing.title || "New Ad",
+    });
     sendUpdate("post-ad", "4", req.user._id);
     res.send(listing);
   } catch (err) {
@@ -247,6 +254,10 @@ router.post("/relist", authorize, async (req, res) => {
       },
       req.user._id
     );
+    sendFCMNotification(req.user.deviceTokens, {
+      title: "Your ad is Live now!",
+      body: listing.title || "Relisted Ad",
+    });
 
     res.send(listing);
   } catch (err) {

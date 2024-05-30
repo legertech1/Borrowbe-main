@@ -12,6 +12,7 @@ const { uploadImage } = require("../AWS");
 const memo = require("../memo");
 const { default: axios } = require("axios");
 const createEmailHtml = require("../utils/createEmailHtml");
+const { sendFCMNotification } = require("../utils/sendNotification");
 
 router.post("/register", async (req, res) => {
   //get the fields
