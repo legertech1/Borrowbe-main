@@ -308,25 +308,51 @@ router.post("/remove-billing-address", async (req, res) => {
 
 // Save device token
 router.post("/save-device-token", async (req, res) => {
-  const userId = req.user._id;
-  const { token } = req.body;
+  try {
+    const userId = req.user._id;
+    const { token, deviceUID } = req.body;
 
-  let r = await User.findByIdAndUpdate(userId, {
-    $addToSet: { deviceTokens: token },
-  });
+    if (!token || !deviceUID) {
+      return res.status(400).send("Bad request");
+    }
 
-  res.send(r);
+    const filter = { _id: userId, "deviceTokens.deviceUID": deviceUID };
+    const update = {
+      $set: { "deviceTokens.$.token": token },
+    };
+    const options = { new: true };
+
+    // First try to update an existing device token
+    let result = await User.findOneAndUpdate(filter, update, options);
+
+    if (!result) {
+      // If no document is found, add a new device token entry
+      result = await User.findOneAndUpdate(
+        { _id: userId },
+        { $push: { deviceTokens: { deviceUID, token } } },
+        { upsert: true, new: true }
+      );
+    }
+
+    console.log("Device token upserted:", result);
+    res.send("Device token saved successfully");
+  } catch (error) {
+    console.log("Error saving device token:", error);
+    res.status(500).send("Error saving device token");
+  }
 });
 
 // Remove device token
 router.post("/remove-device-token", async (req, res) => {
   const userId = req.user._id;
-  const { token } = req.body;
-  let r = await User.findByIdAndUpdate(userId, {
-    $pull: { deviceTokens: token },
-  });
-
-  res.send(r);
+  const { deviceUID } = req.body;
+  // remove deviceUID and its token
+  const result = await User.updateOne(
+    { _id: userId },
+    { $pull: { deviceTokens: { deviceUID } } }
+  );
+  console.log("Device token removed:", result);
+  res.send("Device token removed successfully");
 });
 
 module.exports = router;
