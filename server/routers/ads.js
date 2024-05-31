@@ -211,6 +211,10 @@ router.post("/relist", authorize, async (req, res) => {
     if (!category) return res.status(400).send(errors["invalid-details"]);
     const listing = await Ad.findOne({ _id: req.body.id });
 
+    if (listing.meta.status != "expired") {
+      res.status(400).send("The Ad you're trying to relist is already active.");
+    }
+
     if (listing.location.components.country.short_name != payment.country)
       return res.status(400).send(errors["invalid-details"]);
     try {
