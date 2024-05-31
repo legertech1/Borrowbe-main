@@ -214,6 +214,10 @@ router.post("/relist", authorize, async (req, res) => {
       res.status(400).send("The Ad you're trying to relist is already active.");
     }
 
+    if (listing.meta.status != "expired") {
+      res.status(400).send("The Ad you're trying to relist is already active.");
+    }
+
     if (listing.location.components.country.short_name != payment.country)
       return res.status(400).send(errors["invalid-details"]);
     try {
