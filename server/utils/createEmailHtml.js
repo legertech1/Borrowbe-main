@@ -9,13 +9,12 @@ const header = `
     <title>Document</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap");
-      @import url("https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:ital,wght@0,400..800;1,400..800&display=swap");
 
   
       body {
        
        
-        font-family: "Wix Madefor Text", sans-serif;
+        font-family: helvetica, verdana, tahoma, sans-serif;
         color:black !important;
       
       }

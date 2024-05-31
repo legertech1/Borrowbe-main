@@ -17,6 +17,8 @@ const { createHash } = require("../utils/processHashes");
 const createVerificationCode = require("../utils/createVerificationCode");
 const { Chat } = require("../models/Chat");
 const { Notification } = require("../models/Notifications");
+const sendMail = require("../utils/sendmail");
+const createEmailHtml = require("../utils/createEmailHtml");
 
 router.get("/init", function (req, res) {
   if (!req.cookies.connection_id) {
@@ -24,6 +26,71 @@ router.get("/init", function (req, res) {
   }
 
   res.send({ acknowledged: true });
+});
+router.post("/contact-us", async (req, res) => {
+  try {
+    const {
+      adIdAccountId,
+      name,
+      email,
+      contactReason,
+      description,
+      subject: sub,
+    } = req.body;
+    if (!name || !email || !sub || !contactReason)
+      return res
+        .status(400)
+        .send("Incorrect or insufficient information.please try again");
+    const subject = "New Query: Contact us form";
+    const to = "support@borrowbe.com";
+    const html = `
+    <div>
+            <p>
+                <strong>Name:&nbsp;&nbsp;</strong>
+                <span>${name}</span>
+            </p>
+            <p>
+                <strong>Email:&nbsp;&nbsp;</strong>
+                <span>${email}</span>
+            </p>
+            <p>
+                <strong>Subject:&nbsp;&nbsp;</strong>
+                <span>${sub}</span>
+            </p>
+            <p>
+                <strong>Contact Reason:&nbsp;&nbsp;</strong>
+                <span>${contactReason}</span>
+            </p><p>
+                <strong>Description:&nbsp;&nbsp;</strong>
+                <span>${description}</span>
+            </p>
+            <p>
+                <strong>Ad/Account ID:&nbsp;&nbsp;</strong>
+                <span>${adIdAccountId}</span>
+            </p>
+    </div>
+    `;
+    sendMail({ to, subject, html });
+    sendMail({
+      to: email,
+      subject: "Your query has been received at Borrowbe.",
+      html: createEmailHtml({
+        heading: "Your query has been received at Borrowbe.",
+        content: `<p>Dear ${name.split(" ")[0]},</p>
+        <p>Thank you for reaching out to BorrowBe Support!</p>
+        <p>We have successfully received your query with subject: ${sub}.</p> 
+        <p>Our team is reviewing your request and will get back to you as soon as possible.</p>
+        <p>While we work on addressing your query, here are a few resources that might help: https://borrowbe.com/faq</p>
+        <p>We appreciate your patience and will do our best to respond promptly.</p>
+        <p>Best regards,<br/> The BorrowBe Support Team<p>`,
+      }),
+    });
+
+    res.json({ data: "request submitted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ error: "Error submit query" });
+  }
 });
 
 router.get("/get-stats", authorize, async (req, res) => {

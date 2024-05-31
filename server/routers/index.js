@@ -8,15 +8,11 @@ const adRouter = require("./ads");
 const categoryRouter = require("./categoryManagement");
 const paymentRouter = require("./payments");
 const router = new express.Router();
-const documentRouter = require("./documents")
-const guest = require("./guest")
-
-
+const documentRouter = require("./documents");
 
 //open routes
 router.use("/auth", authRouter);
-router.use("/guest",guest)
-router.use("/documents", documentRouter)
+router.use("/documents", documentRouter);
 // sub authorized routes
 router.use("/ads", adRouter);
 router.use("/location", locationRouter);
