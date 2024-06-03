@@ -19,7 +19,7 @@ const { Chat } = require("../models/Chat");
 const { Notification } = require("../models/Notifications");
 const sendMail = require("../utils/sendmail");
 const createEmailHtml = require("../utils/createEmailHtml");
-
+const createZendeskTick = require("../utils/zendesk");
 router.get("/init", function (req, res) {
   if (!req.cookies.connection_id) {
     createConnectionId(res);
@@ -37,6 +37,7 @@ router.post("/contact-us", async (req, res) => {
       description,
       subject: sub,
     } = req.body;
+
     if (!name || !email || !sub || !contactReason)
       return res
         .status(400)
@@ -85,6 +86,7 @@ router.post("/contact-us", async (req, res) => {
         <p>Best regards,<br/> The BorrowBe Support Team<p>`,
       }),
     });
+    createZendeskTick({ subject: sub, html, name, email });
 
     res.json({ data: "request submitted successfully" });
   } catch (error) {
