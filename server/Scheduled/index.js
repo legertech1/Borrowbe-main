@@ -397,8 +397,8 @@ schedule.scheduleJob("*/2 * * * *", () => {
 // test.randomMetaUpdater();
 // updateStats();
 
-// (async () => {
-//   const ad = (await Ad.find({listingID:"A00000155"}))[0];
-//   console.log(ad);
-//   console.log(verifyHash(ad.location), createHash(ad.location))
-// })();
+(async () => {
+  const ad = (await Ad.find({}))[0];
+  console.log(ad);
+  console.log(verifyHash(ad.location))
+})();
