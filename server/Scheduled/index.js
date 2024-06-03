@@ -263,10 +263,6 @@ async function updateAd(ad, today) {
     _initialised.setHours(0, 0, 0, 0);
     const initialised = _initialised.getTime();
 
-    // if (true) {
-    //   if (ad.config.recurring) return await useRecurring(ad);
-    //   return await expireAd(ad);
-    // }
     if (initialised + ad.meta.duration * dayConstant <= today) {
       if (ad.config.recurring) return await useRecurring(ad);
       return await expireAd(ad);
@@ -383,8 +379,8 @@ async function updateAds() {
     });
 }
 
-schedule.scheduleJob("0 0 0 * * *", updateAds);
-schedule.scheduleJob("0 0 0 * * *", updateStats);
+// schedule.scheduleJob("0 0 0 * * *", updateAds);
+// schedule.scheduleJob("0 0 0 * * *", updateStats);
 schedule.scheduleJob("*/30 * * * *", () => {
   memo.clear();
   memo.clearVerificationCodes();
@@ -400,3 +396,9 @@ schedule.scheduleJob("*/2 * * * *", () => {
 // test.doubleAds();
 // test.randomMetaUpdater();
 // updateStats();
+
+// (async () => {
+//   const ad = (await Ad.find({}))[0];
+//   console.log(ad);
+//   console.log(verifyHash(ad.location))
+// })();

@@ -151,7 +151,6 @@ router.post("/post-ad", authorize, async (req, res) => {
       price: Number(ad.price),
     });
 
-    await listing.save();
     sendUpdate("post-ad", "3", req.user._id);
     listing.meta.hash = createHash(listing.meta._doc);
     listing.config.hash = createHash(listing.config);
@@ -315,15 +314,8 @@ router.put("/:id", authorize, async (req, res) => {
     if (tbs[i].includes("base64")) tbs[i] = await uploadImage(tbs[i]);
   }
 
-  await ad.updateOne({
-    $set: {
-      ...body,
-      images: images,
-      thumbnails: tbs,
-      user: ad.user,
-      meta: ad._doc.meta,
-      config: ad._doc.config,
-      location: {
+  const location = body.location
+    ? {
         ...body.location,
         geoPoint: {
           type: "Point",
@@ -332,12 +324,23 @@ router.put("/:id", authorize, async (req, res) => {
             body.location.coordinates.lat,
           ],
         },
-      },
+      }
+    : ad.location;
+
+  if (!location.hash) location.hash = createHash(location);
+  await ad.updateOne({
+    $set: {
+      ...body,
+      images: images,
+      thumbnails: tbs,
+      user: ad.user,
+      meta: ad._doc.meta,
+      config: ad._doc.config,
+      location: location,
       price: Number(body.price) || ad.price,
     },
   });
-  ad.location.hash = createHash(ad.location);
-  await ad.save();
+
   return res.send({ acknowledged: true });
 });
 

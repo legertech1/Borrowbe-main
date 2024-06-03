@@ -9,23 +9,26 @@ const addressComponent = new mongoose.Schema(
   { _id: false }
 );
 
-const componentsSchema = new mongoose.Schema({
-  country: {
-    type: addressComponent,
+const componentsSchema = new mongoose.Schema(
+  {
+    country: {
+      type: addressComponent,
+    },
+    administrative_area_level_2: addressComponent,
+    administrative_area_level_3: addressComponent,
+    postal_code: addressComponent,
+    locality: addressComponent,
+    route: addressComponent,
+    neighbourhood: addressComponent,
+    sublocality: addressComponent,
+    street_number: addressComponent,
+    subpremise: addressComponent,
+    administrative_area_level_1: {
+      type: addressComponent,
+    },
   },
-  administrative_area_level_2: addressComponent,
-  administrative_area_level_3: addressComponent,
-  postal_code: addressComponent,
-  locality: addressComponent,
-  route: addressComponent,
-  neighbourhood: addressComponent,
-  sublocality: addressComponent,
-  street_number: addressComponent,
-  subpremise: addressComponent,
-  administrative_area_level_1: {
-    type: addressComponent,
-  },
-});
+  { _id: false }
+);
 
 const locationSchema = new mongoose.Schema(
   {
