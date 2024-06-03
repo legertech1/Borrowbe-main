@@ -327,7 +327,6 @@ router.put("/:id", authorize, async (req, res) => {
       }
     : ad.location;
 
-  if (!location.hash) location.hash = createHash(location);
   await ad.updateOne({
     $set: {
       ...body,
@@ -340,7 +339,8 @@ router.put("/:id", authorize, async (req, res) => {
       price: Number(body.price) || ad.price,
     },
   });
-
+  ad.location.hash = createHash(ad.location);
+  await ad.save();
   return res.send({ acknowledged: true });
 });
 
