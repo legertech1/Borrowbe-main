@@ -345,50 +345,55 @@ router.put("/:id", authorize, async (req, res) => {
 });
 
 router.post("/search", async (req, res) => {
-  let record;
-  let userId;
-  if (req.body.impressions) {
-    let key;
+  try {
+    let record;
+    let userId;
+    if (req.body.impressions) {
+      let key;
 
-    try {
-      key = jwt.verify(req.cookies.connection_id, process.env.JWT_SECRET);
-    } catch (err) {}
-    if (key) {
-      record = memo.find(key);
-      if (!record) {
-        record = memo.find(createConnectionId(res));
+      try {
+        key = jwt.verify(req.cookies.connection_id, process.env.JWT_SECRET);
+      } catch (err) {}
+      if (key) {
+        record = memo.find(key);
+        if (!record) {
+          record = memo.find(createConnectionId(res));
+        }
+      }
+      if (req.cookies.auth) {
+        try {
+          userId = jwt.verify(req.cookies.auth, process.env.JWT_SECRET)?.id;
+        } catch (err) {}
       }
     }
-    if (req.cookies.auth) {
-      try {
-        userId = jwt.verify(req.cookies.auth, process.env.JWT_SECRET)?.id;
-      } catch (err) {}
-    }
+    const { results, total, page } = await search({
+      ...req.body,
+      select: {
+        thumbnails: 1,
+        _id: 1,
+        title: 1,
+        description: 1,
+        price: 1,
+        term: 1,
+        location: 1,
+        meta: 1,
+        listingID: 1,
+        user: 1,
+        tax: 1,
+        config: 1,
+        tags: 1,
+        createdAt: 1,
+      },
+      country: req.country,
+    });
+
+    res.send({ results, total, page });
+
+    if (record) await updateImpressions(record, results, userId);
+  } catch (err) {
+    return res.status(500).send("Something went wrong.");
+    console.log(err);
   }
-  const { results, total, page } = await search({
-    ...req.body,
-    select: {
-      thumbnails: 1,
-      _id: 1,
-      title: 1,
-      description: 1,
-      price: 1,
-      term: 1,
-      location: 1,
-      meta: 1,
-      listingID: 1,
-      user: 1,
-      tax: 1,
-      config: 1,
-      tags: 1,
-      createdAt: 1,
-    },
-    country: req.country,
-  });
-
-  res.send({ results, total, page });
-
-  if (record) await updateImpressions(record, results, userId);
 });
 
 router.get("/add-to-wishlist/:id", authorize, async (req, res) => {

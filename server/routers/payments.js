@@ -73,7 +73,6 @@ router.post("/create-payment-intent", authorize, async (req, res) => {
 
       payment.hash = createHash(payment._doc);
 
-      
       await payment.save();
       const paymentToken = jwt.sign(
         { id: payment._id, user: req.user._id },

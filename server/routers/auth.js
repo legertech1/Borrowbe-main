@@ -277,7 +277,7 @@ router.get("/forgot-password/:email", async (req, res) => {
       content: `<p>Hey ${user.firstName},
       please use the link provided below to reset your password.
     </p>
-    <a href="${process.env.BASE_URL}/api/auth/reset-password?token=${verificationToken}">reset password</a>
+    <a href="${process.env.FRONTEND_URI}/reset-password?token=${verificationToken}">reset password</a>
     <p>This link is valid for an hour.</p>
     <p class="light">*Ignore this email if you didn't request to reset your password*</p>`,
       heading: "Reset your Borrowbe password",
