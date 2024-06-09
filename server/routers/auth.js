@@ -287,7 +287,7 @@ router.get("/forgot-password/:email", async (req, res) => {
   res.send({ info: "Acknowledged" });
 });
 
-router.get("/reset-password", async (req, res) => {
+router.post("/reset-password", async (req, res) => {
   const password = req.body.password;
   const token = req.body.token;
   //checking if the values exist
