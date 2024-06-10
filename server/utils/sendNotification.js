@@ -67,6 +67,8 @@ const sendFCMNotification = async (rawTokens, { title, body }) => {
     // if rawTokens contains array of objects then extract token from each object
     tokens = rawTokens.map((token) => token.token);
   }
+  // filter out empty tokens or undefined tokens
+  tokens = tokens.filter((token) => token !== "" && token !== undefined);
   console.log("tokens: ", tokens);
 
   try {
