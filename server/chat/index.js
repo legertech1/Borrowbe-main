@@ -7,41 +7,82 @@ const { User } = require("../models/User");
 const { sendPushNotification } = require("../utils/sendNotification");
 
 async function sendChats(socket, channel) {
-  const chats = await Chat.find({
-    participants: { $in: [socket.user._id] },
-    messages: { $ne: [] },
-    deletedBy: { $nin: [socket?.user?._id] },
-  }).sort({ updatedAt: -1 });
+  const chats = [
+    ...(await Chat.find({
+      participants: { $in: [socket.user._id] },
+      messages: { $ne: [] },
+      deletedBy: { $nin: [socket?.user?._id] },
+    })
+      .sort({ updatedAt: -1 })
+      .lean()),
+  ];
+
+  const people = [];
+  const ads = [];
 
   for (let i = 0; i < chats.length; i++) {
     socket.join(chats[i]._id.toString());
+    people.push(
+      chats[i].participants.filter((i) => i != socket.user._id)[0] || ""
+    );
+    ads.push(chats[i].ad || "");
+  }
+  const userDocs = await User.find({ _id: { $in: people } }).lean();
+  const adDocs = await Ad.find({ _id: { $in: ads } }).lean();
+
+  const userMap = {};
+  const adMap = {};
+  for (let i = 0; i < chats.length; i++) {
+    userMap[userDocs[i]?._id || "_"] = userDocs[i];
+    adMap[adDocs[i]?._id || "_"] = adDocs[i];
   }
 
   let data = [];
   for (chat of chats) {
-    const parsed = await parseChat(chat, socket.user._id.toString());
+    const parsed = await parseChat(
+      chat,
+      socket.user._id.toString(),
+      userMap[chat.participants.filter((i) => i != socket.user._id)[0]] || {
+        firstName: "Deleted",
+        lastName: "User",
+        _id: "",
+        nickname: "",
+        image: "",
+      },
+      adMap[chat.ad] || {
+        title: "Ad has been deleted",
+        image: "",
+        thumbnails: [""],
+        location: { name: "" },
+        price: "",
+        term: "",
+      }
+    );
     if (parsed) data.push(parsed);
   }
 
   channel ? channel.emit("send_chats", data) : socket.emit("send_chats", data);
 }
 
-async function parseChat(chat, user) {
-  const person = await User.findOne(
-    {
-      _id: chat?.participants?.filter((i) => i != user)[0],
-    },
-    { _id: 1, firstName: 1, nickname: 1, image: 1, lastName: 1 }
-  ).lean();
+async function parseChat(chat, user, _person, _ad) {
+  const person =
+    _person ||
+    (await User.findOne(
+      {
+        _id: chat?.participants?.filter((i) => i != user)[0],
+      },
+      { _id: 1, firstName: 1, nickname: 1, image: 1, lastName: 1 }
+    ).lean());
   if (!person) return null;
-  const ad = await Ad.findOne(
-    { _id: chat.ad },
-    { images: 0, extraFields: 0, config: 0, meta: 0 }
-  ).lean();
+  const ad =
+    _ad ||
+    (await Ad.findOne(
+      { _id: chat.ad },
+      { images: 0, extraFields: 0, config: 0, meta: 0 }
+    ).lean());
   if (!ad) return null;
-
   return {
-    ...chat._doc,
+    ...chat,
     info: {
       firstName: person.firstName,
       lastName: person.lastName,
