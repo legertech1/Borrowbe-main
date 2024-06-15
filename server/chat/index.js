@@ -7,16 +7,13 @@ const { User } = require("../models/User");
 const { sendPushNotification } = require("../utils/sendNotification");
 
 async function sendChats(socket, channel) {
-  const chats = [
-    ...(await Chat.find({
-      participants: { $in: [socket.user._id] },
-      messages: { $ne: [] },
-      deletedBy: { $nin: [socket?.user?._id] },
-    })
-      .sort({ updatedAt: -1 })
-      .lean()),
-  ];
-
+  const chats = await Chat.find({
+    participants: { $in: [socket.user._id] },
+    messages: { $ne: [] },
+    deletedBy: { $nin: [socket?.user?._id] },
+  })
+    .sort({ updatedAt: -1 })
+    .lean();
   const people = [];
   const ads = [];
 
