@@ -7,7 +7,7 @@ app.use(
     origin: [
       process.env.FRONTEND_URI,
       process.env.MANAGEMENT_URI,
-      "http://localhost:3000",
+
     ],
     credentials: true,
   })
