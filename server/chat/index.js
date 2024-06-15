@@ -23,7 +23,8 @@ async function sendChats(socket, channel) {
   for (let i = 0; i < chats.length; i++) {
     socket.join(chats[i]._id.toString());
     people.push(
-      chats[i].participants.filter((i) => i != socket.user._id)[0] || ""
+      chats[i].participants.filter((i) => i != socket.user._id.toString())[0] ||
+        ""
     );
     ads.push(chats[i].ad || "");
   }
@@ -42,7 +43,9 @@ async function sendChats(socket, channel) {
     const parsed = await parseChat(
       chat,
       socket.user._id.toString(),
-      userMap[chat.participants.filter((i) => i != socket.user._id)[0]] || {
+      userMap[
+        chat.participants.filter((i) => i != socket.user._id.toString())[0]
+      ] || {
         firstName: "Deleted",
         lastName: "User",
         _id: "",
