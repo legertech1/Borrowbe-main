@@ -391,8 +391,9 @@ router.post("/search", async (req, res) => {
 
     if (record) await updateImpressions(record, results, userId);
   } catch (err) {
-    return res.status(500).send("Something went wrong.");
     console.log(err);
+    return res.status(500).send("Something went wrong.");
+
   }
 });
 

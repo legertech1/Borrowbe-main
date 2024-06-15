@@ -32,6 +32,7 @@ module.exports = async function ({
   if (query[0] == "/") {
     query[0] == "";
   }
+
   if (query[query.length - 1] == "/") {
     query[query.length - 1] == "";
   }
@@ -116,30 +117,32 @@ module.exports = async function ({
     });
   }
 
+  if (select) {
+    const projectStage = { $project: select || {} };
+    resultPipeline.push(projectStage);
+  }
+
+  const countPipeline = [matchStage, { $count: "total" }];
+  const countResult = await Ad.aggregate(countPipeline).exec();
+  const total = countResult.length > 0 ? countResult[0].total : 0;
+
+  const pages = total / (limit || adsPerReq);
+
+  if (random) page = getRandomNumber(1, pages - 1);
+
+  if (page < 1) page = 1;
   resultPipeline.push({
     $skip: (page - 1) * (limit || adsPerReq),
   });
   resultPipeline.push({
     $limit: limit || adsPerReq,
   });
-  if (select) {
-    const projectStage = { $project: select || {} };
-    resultPipeline.push(projectStage);
-  }
-
-  
   // Execute the result aggregation pipeline
   const results = await Ad.aggregate(resultPipeline).exec();
 
   // Count total documents using a separate aggregation pipeline
-  const countPipeline = [matchStage, { $count: "total" }];
-  const countResult = await Ad.aggregate(countPipeline).exec();
-  const total = countResult.length > 0 ? countResult[0].total : 0;
-  const pages = total / (limit || adsPerReq);
 
   // Adjust page number if random is true and ensure it's within valid range
-  if (random) page = getRandomNumber(1, pages - 1);
-  if (page < 1) page = 1;
 
   if (analytics) {
     let stats = await Statistics.find({
