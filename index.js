@@ -2,12 +2,12 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
+console.log(process.env.FRONTEND_URI)
 app.use(
   cors({
     origin: [
       process.env.FRONTEND_URI,
       process.env.MANAGEMENT_URI,
-
     ],
     credentials: true,
   })
@@ -25,7 +25,7 @@ const io = new Server(httpServer, {
     origin: [
       process.env.FRONTEND_URI,
       process.env.MANAGEMENT_URI,
-      "http://localhost:3000",
+
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"], // List all methods explicitly
     credentials: true,

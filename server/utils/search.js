@@ -122,7 +122,7 @@ module.exports = async function ({
     resultPipeline.push(projectStage);
   }
 
-  const countPipeline = [matchStage, { $count: "total" }];
+  const countPipeline = [...resultPipeline, { $count: "total" }];
   const countResult = await Ad.aggregate(countPipeline).exec();
   const total = countResult.length > 0 ? countResult[0].total : 0;
 

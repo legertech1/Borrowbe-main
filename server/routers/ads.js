@@ -389,11 +389,14 @@ router.post("/search", async (req, res) => {
 
     res.send({ results, total, page });
 
-    if (record) await updateImpressions(record, results, userId);
+    try {
+      if (record) await updateImpressions(record, results, userId);
+    } catch (err) {
+      console.log(err);
+    }
   } catch (err) {
     console.log(err);
     return res.status(500).send("Something went wrong.");
-
   }
 });
 
