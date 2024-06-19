@@ -149,8 +149,8 @@ module.exports = function (socket) {
       await conversation.save();
       socket.join(conversation._id.toString());
       if (conversation.messages.length == 1) {
-        const chat1 = await parseChat(conversation, message?.from);
-        const chat2 = await parseChat(conversation, message?.to);
+        const chat1 = await parseChat(conversation._doc, message?.from);
+        const chat2 = await parseChat(conversation._doc, message?.to);
 
         socket.nsp.in(message?.from).emit("new_chat", chat1);
         socket.nsp.in(message?.to).emit("new_chat", chat2);
