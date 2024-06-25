@@ -53,7 +53,7 @@ module.exports = async function ({
       index: "default",
       text: {
         query: query,
-        path: ["title", "description", "tags"],
+        path: ["title", "tags"],
         fuzzy: {
           maxEdits: 2, // Adjust as needed
           maxExpansions: 100, // Adjust as needed
@@ -91,7 +91,9 @@ module.exports = async function ({
       ...locationQuery,
       "meta.category":
         category === "All Categories" ? { $exists: true } : category,
-      "meta.subCategory": subCategory || { $exists: true },
+      "meta.subCategory": "Any"
+        ? { $exists: true }
+        : category || { $exists: true },
       "meta.country": restrictCountry ? country : { $exists: true },
       ...filters,
       ...additional,
