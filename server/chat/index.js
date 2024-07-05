@@ -65,6 +65,7 @@ async function sendChats(socket, channel) {
 }
 
 async function parseChat(chat, user, _person, _ad) {
+  if (chat._doc) chat = chat._doc;
   const person =
     _person ||
     (await User.findOne(
