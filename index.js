@@ -17,7 +17,7 @@ const memo = require("./server/memo");
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  maxHttpBufferSize: 15 * 1024 * 1024, // 15MB
+  maxHttpBufferSize: 50 * 1024 * 1024, // 15MB
   cors: {
     origin: [process.env.FRONTEND_URI, process.env.MANAGEMENT_URI],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"], // List all methods explicitly
