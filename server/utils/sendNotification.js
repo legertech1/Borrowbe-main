@@ -50,60 +50,64 @@ async function sendPushNotification(notification, to, from, adId) {
 }
 
 const sendFCMNotification = async (rawTokens, { title, body }) => {
-  let tokens = [];
-
-  // deviceTokens: [
-  //   {
-  //     deviceUID: '21902229d7eaa789',
-  //     token: 'dCJJTv0-RyeYC5l4msV4rM:APA91bEkd3GDKK00DVpjvP5AgyWBCJfIvjmEBRJpJn-1PK5qNUsHRAVvR5TM0mEoVOC5fvSQotlEJBqwm1zdKMrW7VRlPwxGB9SNy0_hZ-EHCU1L8W4Uumn2rwuhol9Uwb75AuToqpHU',
-  //     _id: new ObjectId("665877d5dc39949ec5c6d221")
-  //   }
-  // ]
-
-  // if rawTokens contains array of strings then do nothing
-  if (typeof rawTokens[0] === "string") {
-    tokens = rawTokens;
-  } else {
-    // if rawTokens contains array of objects then extract token from each object
-    tokens = rawTokens.map((token) => token.token);
-  }
-  // filter out empty tokens or undefined tokens
-  tokens = tokens.filter((token) => token !== "" && token !== undefined);
-  console.log("tokens: ", tokens);
-
   try {
-    let payload = {
-      tokens: tokens,
-      notification: {
-        title: title,
-        body: body,
-      },
-      apns: {
-        payload: {
-          aps: {
-            alert: {
-              title: title,
-              body: body,
-            },
-            sound: "default",
-          },
-        },
-      },
-      android: {
+    let tokens = [];
+
+    // deviceTokens: [
+    //   {
+    //     deviceUID: '21902229d7eaa789',
+    //     token: 'dCJJTv0-RyeYC5l4msV4rM:APA91bEkd3GDKK00DVpjvP5AgyWBCJfIvjmEBRJpJn-1PK5qNUsHRAVvR5TM0mEoVOC5fvSQotlEJBqwm1zdKMrW7VRlPwxGB9SNy0_hZ-EHCU1L8W4Uumn2rwuhol9Uwb75AuToqpHU',
+    //     _id: new ObjectId("665877d5dc39949ec5c6d221")
+    //   }
+    // ]
+
+    // if rawTokens contains array of strings then do nothing
+    if (typeof rawTokens[0] === "string") {
+      tokens = rawTokens;
+    } else {
+      // if rawTokens contains array of objects then extract token from each object
+      tokens = rawTokens.map((token) => token.token);
+    }
+    // filter out empty tokens or undefined tokens
+    tokens = tokens.filter((token) => token !== "" && token !== undefined);
+    console.log("tokens: ", tokens);
+
+    try {
+      let payload = {
+        tokens: tokens,
         notification: {
           title: title,
           body: body,
-          sound: "default",
         },
-      },
-    };
+        apns: {
+          payload: {
+            aps: {
+              alert: {
+                title: title,
+                body: body,
+              },
+              sound: "default",
+            },
+          },
+        },
+        android: {
+          notification: {
+            title: title,
+            body: body,
+            sound: "default",
+          },
+        },
+      };
 
-    let r = await admin.messaging().sendMulticast(payload);
-    console.log("r: ", r);
+      let r = await admin.messaging().sendMulticast(payload);
+      console.log("r: ", r);
 
-    return r;
-  } catch (error) {
-    console.log("error: ", error);
+      return r;
+    } catch (error) {
+      console.log("error: ", error);
+    }
+  } catch (err) {
+    console.log(error);
   }
 };
 

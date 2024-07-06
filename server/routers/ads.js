@@ -163,7 +163,7 @@ router.post("/post-ad", authorize, async (req, res) => {
     payment.description = "Post Ad";
     payment.hash = createHash(payment._doc);
     await payment.save();
-
+    sendUpdate("post-ad", "4", req.user._id);
     sendNotification(
       {
         image: listing.thumbnails[0],
@@ -174,13 +174,19 @@ router.post("/post-ad", authorize, async (req, res) => {
       },
       req.user._id
     );
-    sendFCMNotification(req.user.deviceTokens, {
-      title: "Your ad is Live now!",
-      body: listing.title || "New Ad",
-    });
-    sendUpdate("post-ad", "4", req.user._id);
+
+    try {
+      sendFCMNotification(req.user.deviceTokens, {
+        title: "Your ad is Live now!",
+        body: listing.title || "New Ad",
+      });
+    } catch (err) {
+      console.log(err);
+    }
+
     res.send(listing);
   } catch (err) {
+    console.log(err);
     res.status(500).send(err);
   }
 });
@@ -557,6 +563,7 @@ router.post("/ads-count-data", authorize, async (req, res) => {
 router.post("/batch", authorize, async (req, res) => {
   if (!req.body.type || !req.body.ids) return;
   let deleted;
+  let ads = [];
   if (req.body.type == "delete") {
     await Ad.deleteMany({
       _id: { $in: req.body.ids },
@@ -564,7 +571,7 @@ router.post("/batch", authorize, async (req, res) => {
     });
     deleted = await countUserAds(req.user._id, Ad, User);
   } else if (req.body.type == "pause") {
-    const ads = await Ad.find({
+    ads = await Ad.find({
       _id: { $in: req.body.ids },
       user: req.user._id,
     });
@@ -576,7 +583,7 @@ router.post("/batch", authorize, async (req, res) => {
       }
     }
   } else if (req.body.type == "resume") {
-    const ads = await Ad.find({
+    ads = await Ad.find({
       _id: { $in: req.body.ids },
       user: req.user._id,
     });
@@ -588,7 +595,7 @@ router.post("/batch", authorize, async (req, res) => {
       }
     }
   }
-  res.send(deleted || { acknowledged: true });
+  res.send(deleted || ads);
 });
 router.post("/update-config/:id", authorize, async (req, res) => {
   const ad = await Ad.findOne({ _id: req.params.id, user: req.user._id });
