@@ -5,7 +5,11 @@ const app = express();
 console.log(process.env.FRONTEND_URI);
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URI, process.env.MANAGEMENT_URI],
+    origin: [
+      process.env.FRONTEND_URI,
+      process.env.MANAGEMENT_URI,
+      process.env.BLOG_URI,
+    ],
     credentials: true,
   })
 );
