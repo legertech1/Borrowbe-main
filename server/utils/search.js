@@ -56,7 +56,7 @@ module.exports = async function ({
         path: ["title", "tags"],
         fuzzy: {
           maxEdits: 2, // Adjust as needed
-          maxExpansions: 100, // Adjust as needed
+         // maxExpansions: 100, // Adjust as needed
         },
       },
     };

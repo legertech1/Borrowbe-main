@@ -6,9 +6,13 @@ const app = express();
 app.use(
   cors({
     origin: [
+      
       process.env.FRONTEND_URI,
+     
       process.env.MANAGEMENT_URI,
       process.env.BLOG_URI,
+    ,
+      process.env.MOBILE_FRONTEND_URI,
     ],
     credentials: true,
   })
@@ -23,7 +27,11 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   maxHttpBufferSize: 50 * 1024 * 1024, // 15MB
   cors: {
-    origin: [process.env.FRONTEND_URI, process.env.MANAGEMENT_URI],
+    origin: [
+      process.env.FRONTEND_URI,
+      process.env.MANAGEMENT_URI,
+      process.env.MOBILE_FRONTEND_URI,
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"], // List all methods explicitly
     credentials: true,
     connectionStateRecovery: {},
