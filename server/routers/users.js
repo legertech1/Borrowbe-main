@@ -198,12 +198,16 @@ router.put("/update-business-info/:id", async (req, res) => {
     return res.status(401).send({ error: errors["unauthorized"] });
   let logo = req.user.BusinessInfo?.LOGO || "";
 
-  if (logo != req.body.LOGO && req.body.LOGO != null) {
+  if (logo != req.body.LOGO ) {
     logo = await uploadImage(
       req.body.LOGO,
-      req?.user?.BusinessInfo?.LOGO || null
+    
     );
-  } else if (req.body.LOGO == null) logo = "";
+deleteImage(req.user.BusinessInfo?.LOGO)
+  } else if (! req.body.LOGO ) 
+    {logo = "";
+deleteImage(req.user.BusinessInfo?.LOGO)
+    }
 
   const user = await User.findOneAndUpdate(
     { _id: req.user._id },

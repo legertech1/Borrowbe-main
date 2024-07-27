@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-console.log(process.env.FRONTEND_URI);
+
 app.use(
   cors({
     origin: [
@@ -27,6 +27,7 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"], // List all methods explicitly
     credentials: true,
     connectionStateRecovery: {},
+    withCredentials: true,
   },
   /* options */
 });

@@ -43,6 +43,7 @@ module.exports = {
     }
   },
   deleteImage: async function (key) {
+    if(!key) return
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET,
       Key: key.split("/").reverse()[0],
