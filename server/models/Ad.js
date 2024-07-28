@@ -67,7 +67,7 @@ const adSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
-      max: 1000000,
+      max: 100000000000000,
       get: (v) => parseFloat(v.toFixed(2)), // Ensure the value always includes two decimal places when retrieved
       set: (v) => parseFloat(v.toFixed(2)),
     },
