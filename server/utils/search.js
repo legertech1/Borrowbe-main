@@ -40,29 +40,118 @@ module.exports = async function ({
     ? createGeoConstructQuery(location)
     : createLocationQuery(location);
 
-  let def = { ...defaultQuery };
-  if (ignoreStatus) {
-    def["meta.status"] = /.*/;
-  }
-
   const resultPipeline = [];
 
-  // Add $search stage if query is provided
-  if (query) {
-    const fuzzySearchQuery = {
-      index: "default",
-      text: {
-        query: query,
-        path: ["title", "tags"],
-        fuzzy: {
-          maxEdits: 2, // Adjust as needed
-         // maxExpansions: 100, // Adjust as needed
+  const locationFilters = Object.keys(locationQuery).flatMap((key) =>
+    Object.keys(locationQuery[key]).map((key2) => ({
+      term: {
+        path: `${key}.${key2}`,
+        query: locationQuery[key][key2],
+      },
+    }))
+  );
+  let filter = Object.keys(filters).map((key) => {
+    if (
+      typeof filters[key] === "object" &&
+      filters[key].$lte !== undefined &&
+      filters[key].$gte !== undefined
+    ) {
+      // Handle range filters
+      return {
+        range: {
+          path: key,
+          gte: filters[key].$gte,
+          lte: filters[key].$lte,
+        },
+      };
+    } else {
+      // Handle non-range filters if needed
+      return {
+        text: {
+          path: key,
+          query: filters[key],
+        },
+      };
+    }
+  });
+  let filterList = [
+    category === "All Categories"
+      ? {
+          exists: {
+            path: "meta.category",
+          },
+        }
+      : {
+          equals: {
+            path: "meta.category",
+            value: category,
+          },
+        },
+
+    "Any"
+      ? {
+          exists: {
+            path: "meta.subCategory",
+          },
+        }
+      : {
+          equals: {
+            path: "meta.subCategory",
+            value: category,
+          },
+        },
+    !restrictCountry
+      ? {
+          exists: {
+            path: "meta.country",
+          },
+        }
+      : {
+          equals: {
+            path: "meta.country",
+            value: category,
+          },
+        },
+  ];
+  if (ignoreStatus)
+    filterList.push({
+      equals: {
+        path: "meta.status",
+        value: "active",
+      },
+    });
+
+  let additionalFilter = Object.keys(additional).map((key) => ({
+    equals: {
+      path: key,
+      value: additional[key],
+    },
+  }));
+  if (additionalFilter) filterList.push(...additionalFilter);
+  if (filter) filterList.push(...filter);
+  filterList.push(...locationFilters);
+  // Add $match stage
+
+  const fuzzySearchQuery = {
+    index: "default",
+    compound: {
+      filter: filterList,
+    },
+  };
+  if (query)
+    fuzzySearchQuery.compound.must = [
+      {
+        text: {
+          query: query,
+          path: ["title", "tags"],
+          fuzzy: {
+            maxEdits: 2,
+          },
         },
       },
-    };
+    ];
+  resultPipeline.push({ $search: fuzzySearchQuery });
 
-    resultPipeline.push({ $search: fuzzySearchQuery });
-  }
   try {
     if (additional.user) {
       const arr = [];
@@ -83,23 +172,6 @@ module.exports = async function ({
   } catch (err) {
     res.status(400).send("request syntax error");
   }
-
-  // Add $match stage
-  const matchStage = {
-    $match: {
-      ...def,
-      ...locationQuery,
-      "meta.category":
-        category === "All Categories" ? { $exists: true } : category,
-      "meta.subCategory": "Any"
-        ? { $exists: true }
-        : category || { $exists: true },
-      "meta.country": restrictCountry ? country : { $exists: true },
-      ...filters,
-      ...additional,
-    },
-  };
-  resultPipeline.push(matchStage);
 
   if (additional._id) {
     const sortOrder = additional._id.$in.map((id) => id.toString());
