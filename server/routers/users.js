@@ -342,11 +342,15 @@ router.post("/change-email", async (req, res) => {
 });
 
 router.post("/update-config", async (req, res) => {
+try {
   const config = req.body;
   delete config._id;
 
   await User.findOneAndUpdate({ _id: req.user._id }, { config });
-  return res.status(200);
+  return res.status(200).send("ok");
+}catch(err){
+  console.log(err)
+}
 });
 
 router.post("/add-billing-address", async (req, res) => {
