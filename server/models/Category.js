@@ -190,7 +190,7 @@ const categorySchema = new mongoose.Schema(
       required: true,
       default: defaultCategoryPricing,
     },
-
+    num:Number,
     fields: {
       type: [
         {

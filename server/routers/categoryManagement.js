@@ -6,6 +6,7 @@ const { CategoryArchive } = require("../models/CategoryArchive");
 const authorize = require("../utils/authorize");
 const authorizeAdmin = require("../utils/authorizeAdmin");
 const categoryUpdate = require("../utils/categoryUpdate");
+const { adsPerReq } = require("../../serverConstants");
 
 const updateArchive = (category, user) => {
   return new Promise(async (resolve, reject) => {
@@ -56,7 +57,7 @@ router.get("/", async (req, res) => {
   const categories = await Category.find({
     status: "active",
     subCategories: { $ne: [] },
-  });
+  }).sort("num");
 
   const data = categories.map((category) => {
     return {
@@ -73,12 +74,65 @@ router.get("/", async (req, res) => {
 router.use(authorize);
 router.use(authorizeAdmin);
 router.get("/data", async (req, res) => {
-  res.send(await Category.find({}));
+  res.send(await Category.find({}).sort("num"));
 });
 
 router.get("/archive", async (req, res) => {
   res.send(await CategoryArchive.find());
 });
+
+
+router.post('/change-category-order', async (req , res )=>{
+
+const categroies = await Category.find({});
+const ids = req.body.categories
+
+if(!ids) return res.status(400)
+  for ( let [ind , c] of categroies.entries() ){
+    if(c._id == ids[ind] && c.num == ind) continue
+    ids.forEach(async (id, ind) =>{
+      if(id == c._id && ind != c.num){
+   
+        c.num = ind ;
+        await c.save()
+      }
+    })
+}
+
+ 
+  
+res.send("ok")
+} )
+
+
+router.post("/update-category-fields/:id", async (req, res)=>{
+  const category = await Category.findOne({_id: req.params.id});
+  if(!req.body.fields ) return 
+ await category.updateOne({fields: req.body.fields})
+ res.send("ok")
+})
+
+router.post("/update-sub-category-fields/:category/:subCategory", async (req, res)=>{
+  const category = await Category.findOne({_id: req.params.category});
+  if(!req.body.fields ) return 
+ await category.updateOne({"subCategories.$[x].fields": req.body.fields},    { new: true, arrayFilters: [{ "x._id": req.params.subCategory }] })
+ res.send("ok")
+})
+router.post('/change-sub-category-order/:id', async (req , res )=>{
+  const category = await Category.findOne({_id: req.params.id});
+  const ids = req.body.subCategories;
+  if(!ids) return res.status(400)
+  const subCategories = [];
+  category.subCategories.forEach(c =>{
+    ids.forEach((id , ind)=>{
+      if(c._id == id) subCategories[ind] = c;
+    })
+  })
+  if(subCategories.length != category.subCategories.length) return res.status(400).send("An error occured");
+  category.subCategories = subCategories;
+  await category.save()
+  res.send("ok")
+  } )
 
 router.post("/make-category", async (req, res) => {
   const { name } = req.body;
@@ -106,6 +160,7 @@ router.post("/make-category", async (req, res) => {
   res.send(category);
   // categoryUpdate(category)
 });
+
 
 router.post("/make-sub-category/:id", async (req, res) => {
   const { name } = req.body;
