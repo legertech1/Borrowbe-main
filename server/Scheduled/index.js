@@ -34,6 +34,7 @@ const test = {
       ad.meta.highlighted = !Boolean(Math.floor(Math.random() * 5));
       ad.meta.homepageGallery = !Boolean(Math.floor(Math.random() * 6));
 
+
       ad.meta.listingRank =
         Math.random() *
         Math.random() *
@@ -47,6 +48,7 @@ const test = {
           filter: { _id: ad._id },
           update: {
             meta: ad.meta,
+            priceHidden: !Boolean(Math.floor(Math.random() * 5))
           },
         },
       });

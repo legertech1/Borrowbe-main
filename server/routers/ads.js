@@ -389,6 +389,7 @@ router.post("/search", async (req, res) => {
         config: 1,
         tags: 1,
         createdAt: 1,
+        priceHidden:1
       },
       country: req.country,
     });
