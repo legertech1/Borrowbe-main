@@ -148,8 +148,9 @@ router.post("/post-ad", authorize, async (req, res) => {
       status: "active",
       meta: { ...listingMetaData },
       config: { current: cart, next: payment.cart },
-      price: Number(ad.price),
+      price: Number(ad.price || 0),
     });
+
 
     sendUpdate("post-ad", "3", req.user._id);
     listing.meta.hash = createHash(listing.meta._doc);
@@ -342,7 +343,7 @@ router.put("/:id", authorize, async (req, res) => {
       meta: ad._doc.meta,
       config: ad._doc.config,
       location: location,
-      price: Number(body.price) || ad.price,
+      price: Number(body.price) ,
     },
   });
   ad.location.hash = createHash(ad.location);
