@@ -5,17 +5,17 @@ module.exports = {
   defaultSelection: {},
   defaultQuery: { "meta.status": "active" },
   defaultNotificationConfig: {
-    "account updates": true,
-    "ad has expired": true,
-    "ad is posted": true,
-    "auto-relist status changed": true,
-    "auto-relisted successfully": true,
-    "auto-relist failed": true,
+    "Account updates": true,
+    "Ad has expired": true,
+    "Ad is posted": true,
+    "Auto-relist status changed": true,
+    "Auto-relisted successfully": true,
+    "Auto-relist failed": true,
   },
   defaultEmailConfig: {
-    "ad has expired": true,
-    "new message recieved": true,
-    "account updates": true,
+    "Ad has expired": true,
+    "New message recieved": true,
+    "Account updates": true,
   },
   defaultCategoryPricing: {
     Basic: {
