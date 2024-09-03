@@ -1,5 +1,4 @@
 module.exports = async function (userId, Ad, User) {
-
   try {
     const ads = await Ad.find({
       user: userId,

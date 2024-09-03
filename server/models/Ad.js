@@ -8,6 +8,7 @@ const countUserAds = require("../utils/countUserAds");
 const { User } = require("./User");
 const countryValidator = require("../utils/countryValidator");
 const { Statistics } = require("./AdStatistics");
+const verifyAccess = require("../utils/verifyAccess");
 const metaSchema = new mongoose.Schema(
   {
     featured: { type: Boolean, default: false, required: true },
@@ -56,17 +57,16 @@ const adSchema = new mongoose.Schema(
     user: {
       type: mongoose.Types.ObjectId,
       required: true,
-    }, 
+    },
     title: {
       type: String,
     },
     description: {
       type: String,
     },
-    priceHidden:{
-      type:Boolean,
-      default:false,
-
+    priceHidden: {
+      type: Boolean,
+      default: false,
     },
     price: {
       type: Number,
@@ -165,6 +165,81 @@ adSchema.pre(
     }
   }
 );
+adSchema.pre(["find", "findOne"], function (next) {
+  const user = this.getOptions().user;
+  if (!user) return next();
+  if (verifyAccess(user, this.model.collection.name, "read")) {
+    return next();
+  } else throw new Error("Access Denied");
+});
+adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
+  const user = this.getOptions().user;
+  const update = this.getUpdate();
+  const key = this.getOptions().key;
+  if (!user) return next();
+  if (
+    (update.$set && (update.$set.config || update.$set.meta)) ||
+    update.meta ||
+    update.config
+  ) {
+    if (verifyAccess(user, this.model.collection.name, "override")) {
+      return next();
+    } else throw new Error("Access Denied");
+  }
+
+  if (verifyAccess(user, this.model.collection.name, "update")) {
+    return next();
+  } else {
+    this.getFilter().user = user._id;
+    return next();
+  }
+});
+adSchema.pre("save", function (next) {
+  const user = this.options.user;
+  if (!user) return next();
+  if (this.isModified("meta") || this.isModified("config")) {
+    if (verifyAccess(user, this.constructor.collection.name, "override")) {
+      return next();
+    } else {
+      throw new Error("Access Denied");
+    }
+  }
+
+  if (
+    this.isNew
+      ? verifyAccess(user, this.constructor.collection.name, "create")
+      : verifyAccess(user, this.constructor.collection.name, "update")
+  ) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+adSchema.pre("remove", function (next) {
+  const user = this.options.user;
+
+  if (!user) return next();
+
+  if (verifyAccess(user, this.constructor.collection.name, "delete")) {
+    return next();
+  } else {
+    if (!this.isModified("user") && this.user.toString() == user._id.toString())
+      return next();
+    else throw new Error("Access Denied");
+  }
+});
+adSchema.pre(["deleteeMany", "findOneAndDelete", "deleteOne"], function (next) {
+  const user = this.getOptions().user;
+
+  if (!user) return next();
+
+  if (verifyAccess(user, this.model.collection.name, "delete")) {
+    return next();
+  } else {
+    this.getFilter().user = user._id;
+    return next();
+  }
+});
 const Ad = db.model("Ad", adSchema);
 
 module.exports = { Ad, adSchema };

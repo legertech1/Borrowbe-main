@@ -2,6 +2,7 @@ const { primaryDB: db } = require("../../db");
 const mongoose = require("mongoose");
 const currencyValidator = require("../utils/currencyValidator");
 const countryValidator = require("../utils/countryValidator");
+const verifyAccess = require("../utils/verifyAccess");
 
 const cartSchema = new mongoose.Schema(
   {
@@ -79,7 +80,78 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 );
+paymentSchema.pre(["find", "findOne"], function (next) {
+  const user = this.getOptions().user;
+  if (!user) return next();
 
+  if (!user) throw new Error("Access Denied");
+  if (verifyAccess(user, this.model.collection.name, "read")) {
+    next();
+  } else {
+    this.getFilter().user = user._id;
+    next();
+  }
+});
+paymentSchema.pre(
+  ["updateOne", "updateMany", "findOneAndUpdate"],
+  function (next) {
+    const user = this.getOptions().user;
+    if (!user) return next();
+
+    if (!user) throw new Error("Access Denied");
+    if (verifyAccess(user, this.model.collection.name, "update")) {
+      next();
+    } else throw new Error("Access Denied");
+  }
+);
+paymentSchema.pre(
+  ["deleteOne", "deleteMany", "findOneAndDelete"],
+  function (next) {
+    const user = this.getOptions().user;
+    if (!user) throw new Error("Access Denied");
+    if (verifyAccess(user, this.model.collection.name, "delete")) {
+      next();
+    } else throw new Error("Access Denied");
+  }
+);
+paymentSchema.pre("save", function (next) {
+  const user = this.options.user;
+
+  const key = this.options?.key;
+  if (!user) return next();
+
+  if (!user) {
+    throw new Error("Access Denied");
+  }
+
+  if (
+    this.isNew
+      ? verifyAccess(user, this.constructor.collection.name, "create")
+      : verifyAccess(user, this.constructor.collection.name, "update")
+  ) {
+    return next();
+  } else {
+    if (
+      (this.isNew || this.isModified("user")) &&
+      this.user.toString() == user._id.toString() &&
+      key == process.env.SYS_PASSKEY
+    )
+      return next();
+    else throw new Error("Access Denied");
+  }
+});
+paymentSchema.pre("remove", function (next) {
+  const user = this.options.user;
+  if (!user) return next();
+
+  if (!user) {
+    throw new Error("Access Denied");
+  }
+
+  if (verifyAccess(user, this.constructor.collection.name, "delete")) {
+    return next();
+  } else throw new Error("Access Denied");
+});
 module.exports = {
   Payment: db.model("Payment", paymentSchema),
   paymentSchema,

@@ -100,7 +100,6 @@ router.post("/post-ad", authorize, async (req, res) => {
     }
 
     const payment = await Payment.findOne({ _id: verifiedToken.id });
-
     if (!payment) return res.status(404).send(errors["transaction-not-found"]);
     if (payment.ads?.length)
       return res.status(401).send({ error: errors["invalid-payment-token"] });
@@ -151,11 +150,11 @@ router.post("/post-ad", authorize, async (req, res) => {
       price: Number(ad.price || 0),
     });
 
-
     sendUpdate("post-ad", "3", req.user._id);
     listing.meta.hash = createHash(listing.meta._doc);
     listing.config.hash = createHash(listing.config);
     listing.location.hash = createHash(listing.location);
+
     await listing.save();
 
     if (!verifyHash(payment._doc))
@@ -163,6 +162,7 @@ router.post("/post-ad", authorize, async (req, res) => {
     payment.ads = [listing._id];
     payment.description = "Post Ad";
     payment.hash = createHash(payment._doc);
+
     await payment.save();
     sendUpdate("post-ad", "4", req.user._id);
     sendNotification(
@@ -252,12 +252,14 @@ router.post("/relist", authorize, async (req, res) => {
     listing.meta.hash = createHash(listing.meta._doc);
     listing.config.hash = createHash(listing.config);
     listing.location.hash = createHash(listing.location);
+
     await listing.save();
     if (!verifyHash(payment._doc))
       return res.status(400).send(errors["invalid-hash"]);
     payment.ads = [listing._id];
     payment.description = "Relist Ad";
     payment.hash = createHash(payment._doc);
+
     await payment.save();
     sendNotification(
       {
@@ -283,7 +285,10 @@ router.put("/:id", authorize, async (req, res) => {
 
   if (!req.user) return res.status(401).send({ error: errors["unauthorized"] });
 
-  const ad = await Ad.findOne({ _id: req.params.id, user: req.user._id });
+  const ad = await Ad.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
   let imagesToDelete = [];
   if (body.location.components.country.short_name != ad.meta.country)
     return res.status(400).send(errors["invalid-details"]);
@@ -343,10 +348,11 @@ router.put("/:id", authorize, async (req, res) => {
       meta: ad._doc.meta,
       config: ad._doc.config,
       location: location,
-      price: Number(body.price) ,
+      price: Number(body.price),
     },
   });
   ad.location.hash = createHash(ad.location);
+
   await ad.save();
   return res.send({ acknowledged: true });
 });
@@ -390,7 +396,7 @@ router.post("/search", async (req, res) => {
         config: 1,
         tags: 1,
         createdAt: 1,
-        priceHidden:1
+        priceHidden: 1,
       },
       country: req.country,
     });
@@ -488,7 +494,7 @@ module.exports = router;
 router.delete("/:id", authorize, async function (req, res) {
   const ad = await Ad.findOne({ _id: req.params.id });
   if (!ad) return res.status(404).send(errors["resourse-not-found"]);
-  const deleted = await ad.deleteOne({
+  const deleted = await Ad.deleteOne({
     _id: req.params.id,
     user: req.user._id,
   });
@@ -505,6 +511,7 @@ router.get("/pause/:id", authorize, async (req, res) => {
   if (!ad) return res.status("404").send(errors["resourse-not-found"]);
   ad.meta.status = "paused";
   ad.meta.hash = createHash(ad.meta._doc);
+
   await ad.save();
 
   return res.send(ad);
@@ -519,6 +526,7 @@ router.get("/resume/:id", authorize, async (req, res) => {
   if (!ad) return res.status("404").send(errors["resourse-not-found"]);
   ad.meta.status = "active";
   ad.meta.hash = createHash(ad.meta._doc);
+
   await ad.save();
 
   return res.send(ad);
@@ -581,6 +589,7 @@ router.post("/batch", authorize, async (req, res) => {
       if (ad.meta.status == "active") {
         ad.meta.status = "paused";
         ad.meta.hash = createHash(ad.meta._doc);
+
         await ad.save();
       }
     }
@@ -611,6 +620,7 @@ router.post("/update-config/:id", authorize, async (req, res) => {
     return res.status(403).send(errors["altered-values-detected"]);
   ad.config.next = { ...cart, category: ad.meta.category, total };
   ad.config.hash = createHash(ad.config);
+
   await ad.save();
   res.send(ad);
 });

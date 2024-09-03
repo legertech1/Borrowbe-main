@@ -198,16 +198,13 @@ router.put("/update-business-info/:id", async (req, res) => {
     return res.status(401).send({ error: errors["unauthorized"] });
   let logo = req.user.BusinessInfo?.LOGO || "";
 
-  if (logo != req.body.LOGO ) {
-    logo = await uploadImage(
-      req.body.LOGO,
-    
-    );
-deleteImage(req.user.BusinessInfo?.LOGO)
-  } else if (! req.body.LOGO ) 
-    {logo = "";
-deleteImage(req.user.BusinessInfo?.LOGO)
-    }
+  if (logo != req.body.LOGO) {
+    logo = await uploadImage(req.body.LOGO);
+    deleteImage(req.user.BusinessInfo?.LOGO);
+  } else if (!req.body.LOGO) {
+    logo = "";
+    deleteImage(req.user.BusinessInfo?.LOGO);
+  }
 
   const user = await User.findOneAndUpdate(
     { _id: req.user._id },
@@ -261,7 +258,7 @@ router.post("/create-password", async (req, res) => {
       .send("Incorrect verification code. please try again.");
   if (!password) return res.status(400).send("incorrect details");
   if (vc.email != email) return res.status(401).send("Unauthorised");
-  // const user = await User.find({ _id: req.user._id });
+
   const hash = await bcrypt.hash(password, 12);
   req.user.password = hash;
   await req.user?.save();
@@ -342,15 +339,15 @@ router.post("/change-email", async (req, res) => {
 });
 
 router.post("/update-config", async (req, res) => {
-try {
-  const config = req.body;
-  delete config._id;
+  try {
+    const config = req.body;
+    delete config._id;
 
-  await User.findOneAndUpdate({ _id: req.user._id }, { config });
-  return res.status(200).send("ok");
-}catch(err){
-  console.log(err)
-}
+    await User.findOneAndUpdate({ _id: req.user._id }, { config });
+    return res.status(200).send("ok");
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 router.post("/add-billing-address", async (req, res) => {

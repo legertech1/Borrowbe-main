@@ -42,6 +42,7 @@ router.post("/register", async (req, res) => {
     password: hash,
     image: await uploadImage(avatar),
   });
+  user.options = { key: process.env.SYS_PASSKEY };
   await user.save();
 
   //create token
@@ -91,6 +92,7 @@ router.get("/verify", async (req, res) => {
   const user = await User.findOne({ _id: verified.id });
   if (user.verified) return res.redirect(process.env.FRONTEND_URI + "/");
   user.verified = true;
+  user.options = { key: process.env.SYS_PASSKEY };
   await user.save();
 
   //create authorization token
@@ -185,8 +187,10 @@ router.post("/login", async (req, res) => {
   //check password
   const isMatch = await bcrypt.compare(password, user.password);
   //increase risk in case of wrong password and send error
+  user.options = { user };
   if (!isMatch) {
     user.authenticationRisk += 1;
+    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
     if (user.authenticationRisk >= 5) {
       //initiate account lockdown
@@ -199,6 +203,7 @@ router.post("/login", async (req, res) => {
 
   if (isMatch) {
     user.authenticationRisk = 0;
+    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
   }
   //create token
@@ -247,6 +252,7 @@ router.get("/me", async (req, res) => {
   //initiate account lockdown
   if (user.authenticationRisk >= 5) {
     user.accountLocked = true;
+    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
     return res.status(401).send({ error: errors["account-locked"] });
   }
@@ -318,12 +324,14 @@ router.post("/reset-password", async (req, res) => {
 
   //update password
   user.password = hash;
+  user.options = { key: process.env.SYS_PASSKEY };
   await user.save();
 
   //clear lockdown
   if (user.accountLocked) {
     user.accountLocked = false;
     user.authenticationRisk = 0;
+    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
   }
 
@@ -411,6 +419,7 @@ router.get("/google/callback", async (req, res) => {
       verified: true,
       image: decoded.picture,
     });
+    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
     const authorizationToken = jwt.sign(
       { id: user._id, time: Date.now() },

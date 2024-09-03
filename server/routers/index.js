@@ -21,12 +21,10 @@ router.use("/payment", paymentRouter);
 
 //sub authorized admin routes
 router.use("/categories", categoryRouter);
-
+router.use("/manage", managementRouter);
 //authorized routes
 router.use(authorize);
 
 //admin routes , only acessablefor admins
-
-router.use("/manage", managementRouter);
 
 module.exports = router;

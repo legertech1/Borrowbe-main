@@ -5,6 +5,8 @@ const {
   defaultNotificationConfig,
   defaultEmailConfig,
 } = require("../../serverConstants");
+const accessCodeSchema = require("./AccessCode");
+const verifyAccess = require("../utils/verifyAccess");
 
 const businessInfoSchema = new mongoose.Schema({
   LOGO: String,
@@ -114,12 +116,122 @@ const userSchema = new mongoose.Schema(
         },
       },
     },
+    accessCode: {
+      type: accessCodeSchema,
+      required: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+// Pre-find hook
+userSchema.pre(["find", "findOne"], function (next) {
+  const user = this.getOptions().user;
+  if (!user) return next();
+  if (verifyAccess(user, this.model.collection.name, "read")) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
 
+// Pre-save hook
+userSchema.pre("save", function (next) {
+  const user = this.options?.user;
+  const key = this.options.key;
+  if (this.isModified("accessCode")) {
+    if (
+      verifyAccess(user, this.constructor.collection.name, "override") ||
+      key == process.env.ROOT_PASSKEY
+    ) {
+      next();
+    } else {
+      throw new Error("Access Denied");
+    }
+  }
+  if (!user) return next();
+
+  if (
+    this.isNew
+      ? verifyAccess(user, this.constructor.collection.name, "create")
+      : verifyAccess(user, this.constructor.collection.name, "update")
+  ) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+
+// Pre-remove hook
+userSchema.pre("remove", function (next) {
+  const user = this.options?.user;
+  const key = this.options?.key;
+  if (!user) return next();
+
+  if (verifyAccess(user, this.constructor.collection.name, "delete")) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+
+// Pre-updateOne hook
+userSchema.pre(
+  ["updateOne", "findOneAndUpdate", "updateMany"],
+  function (next) {
+    const user = this.getOptions().user;
+    const key = this.getOptions().key;
+    const update = this.getUpdate();
+
+    const requireOverride =
+      (update.$set && update.$set["accessCode"]) || update.accessCode;
+    if (requireOverride) {
+      if (
+        verifyAccess(user, this.model.collection.name, "override") ||
+        key == process.env.ROOT_PASSKEY
+      ) {
+        next();
+      } else {
+        throw new Error("Access Denied");
+      }
+    }
+    if (!user) return next();
+    if (verifyAccess(user, this.model.collection.name, "update")) {
+      return next();
+    } else {
+      return new Error("Access Denied");
+    }
+  }
+);
+
+// Pre-deleteOne hook
+userSchema.pre("deleteOne", function (next) {
+  const user = this.getOptions().user;
+  const key = this.getOptions().key;
+  if (!user) return next();
+
+  if (verifyAccess(user, this.model.collection.name, "delete")) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+
+// Pre-updateMany hook
+
+// Pre-deleteMany hook
+userSchema.pre("deleteMany", function (next) {
+  const user = this.getOptions().user;
+
+  if (!user) return next();
+
+  if (verifyAccess(user, this.model.collection.name, "delete")) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
 const User = db.model("User", userSchema);
 module.exports = {
   User,

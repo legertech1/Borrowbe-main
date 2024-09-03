@@ -12,6 +12,7 @@ async function sendChats(socket, channel) {
     messages: { $ne: [] },
     deletedBy: { $nin: [socket?.user?._id] },
   })
+
     .sort({ updatedAt: -1 })
     .lean();
   const people = [];
@@ -165,6 +166,7 @@ module.exports = function (socket) {
       if (conversation.deletedBy.length) {
         const deletedBy = [...conversation.deletedBy];
         conversation.deletedBy = [];
+
         await conversation.save();
         deletedBy.forEach(async (id) => {
           const chat = await parseChat(conversation, id.toString());
@@ -296,6 +298,7 @@ module.exports = function (socket) {
     });
     if (!notifications) {
       notifications = new Notification({ user: socket.user._id, data: [] });
+
       await notifications.save();
     }
     if (notifications?.data?.length > 50) {
@@ -303,6 +306,7 @@ module.exports = function (socket) {
         notifications.data.length - 50,
         notifications.data.length
       );
+
       await notifications.save();
     }
     socket.emit("load_notifications", notifications?.data || []);

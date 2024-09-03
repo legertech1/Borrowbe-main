@@ -4,6 +4,7 @@ const statusValidator = require("../utils/statusValidator");
 const termValidator = require("../utils/termValidator");
 const inputTypeValidator = require("../utils/inputTypeValidator");
 const { defaultCategoryPricing } = require("../../serverConstants");
+const verifyAccess = require("../utils/verifyAccess");
 
 const packageSchema = new mongoose.Schema(
   {
@@ -190,7 +191,7 @@ const categorySchema = new mongoose.Schema(
       required: true,
       default: defaultCategoryPricing,
     },
-    num:Number,
+    num: Number,
     fields: {
       type: [
         {
@@ -225,6 +226,76 @@ const categorySchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
+);
+
+categorySchema.pre(["find", "findOne"], function (next) {
+  const user = this.getOptions().user;
+  if (!user) return next();
+  if (verifyAccess(user, this.model.collection.name, "read")) {
+    return next();
+  } else throw new Error("Access Denied");
+});
+
+// Pre-save hook
+categorySchema.pre("save", function (next) {
+  const user = this.options?.user;
+
+  if (
+    this.isNew
+      ? verifyAccess(user, this.constructor.collection.name, "create")
+      : verifyAccess(user, this.constructor.collection.name, "update")
+  ) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+
+// Pre-remove hook
+categorySchema.pre("remove", function (next) {
+  const user = this.options?.user;
+
+  if (!user) {
+    throw new Error("Access Denied");
+  }
+
+  if (verifyAccess(user, this.constructor.collection.name, "delete")) {
+    return next();
+  } else {
+    throw new Error("Access Denied");
+  }
+});
+
+// Pre-updateOne hook
+categorySchema.pre(
+  ["updateOne", "updateMany", "findOneAndUpdate"],
+  function (next) {
+    const user = this.getOptions().user;
+
+    if (!user) {
+      throw new Error("Access Denied");
+    }
+
+    if (verifyAccess(user, this.model.collection.name, "update")) {
+      return next();
+    } else {
+      throw new Error("Access Denied");
+    }
+  }
+);
+
+// Pre-deleteOne hook
+categorySchema.pre(
+  ["deleteOne", "deleteMany", "findOneAndDelete"],
+  function (next) {
+    const user = this.getOptions().user;
+
+    if (verifyAccess(user, this.model.collection.name, "delete")) {
+      return next();
+    } else {
+      throw new Error("Access Denied");
+    }
+  }
 );
 
 module.exports = {

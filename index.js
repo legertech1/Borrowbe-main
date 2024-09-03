@@ -6,12 +6,11 @@ const app = express();
 app.use(
   cors({
     origin: [
-      
       process.env.FRONTEND_URI,
-     
+
       process.env.MANAGEMENT_URI,
       process.env.BLOG_URI,
-    ,
+      ,
       process.env.MOBILE_FRONTEND_URI,
     ],
     credentials: true,
@@ -22,6 +21,7 @@ const cookieParser = require("cookie-parser");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
+const { default: mongoose } = require("mongoose");
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {

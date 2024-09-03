@@ -27,6 +27,7 @@ router.post("/transactions", authorize, async (req, res) => {
     type,
     amount: { $ne: 0 },
   })
+
     .sort("-createdAt")
     .skip((page - 1) * 20)
     .limit(20)
