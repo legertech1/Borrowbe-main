@@ -1,0 +1,45 @@
+name: EC2-DEV-Dev
+
+# Trigger deployment only on push to the TEST branch
+on:
+  push:
+    branches:
+      - test
+
+jobs:
+  deploy:
+    name: Deploy and Setup on EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set permissions on the remote server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            sudo chown -R ${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_USERNAME }} ${{ secrets.DEV_TEST_TARGET_DIR }}
+            sudo chmod -R 755 ${{ secrets.DEV_TEST_TARGET_DIR }}
+
+      - name: Deploy files to the server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.DEV_HOST }}
+          REMOTE_USER: ${{ secrets.DEV_USERNAME }}
+          TARGET: ${{ secrets.DEV_TEST_TARGET_DIR }}
+
+      - name: Setup and restart application
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEV_TEST_TARGET_DIR }}
+            npm install
+            pm2 restart BORROW_BE_TEST
