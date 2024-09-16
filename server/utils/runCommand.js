@@ -23,6 +23,15 @@ const commands = {
       user,
       collections: new Map(),
       role: "admin",
+      pages: {
+        Ads: true,
+        Dashboard: true,
+        Users: true,
+        Categories: true,
+        Permissions: true,
+        UserDetails: true,
+        AdDetails: true,
+      },
     };
     allCollections.forEach((c) => {
       doc.accessCode.collections.set(c, {
@@ -33,6 +42,7 @@ const commands = {
         override: true,
       });
     });
+
     doc.accessCode.hash = createHash(doc.accessCode);
     doc.options = { key: process.env.ROOT_PASSKEY };
 

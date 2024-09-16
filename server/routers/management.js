@@ -6,15 +6,9 @@ const { DeletedUser } = require("../models/DeletedUser");
 const { Ad } = require("../models/Ad");
 const { DeletedAd } = require("../models/DeletedAd");
 
-const errors = require("../utils/errors.json");
-const createAvatar = require("../utils/createAvatar");
-const bcrypt = require("bcrypt");
-const generateID = require("../utils/generateID");
-
 const { createHash, verifyHash } = require("../utils/processHashes");
 const runCommand = require("../utils/runCommand");
 const authorize = require("../utils/authorize");
-const { create } = require("../models/Counter");
 
 router.post("/command", async (req, res) => {
   res.send(await runCommand(req.body.command, req.body));
@@ -137,13 +131,13 @@ router.post("/delete-items", async (req, res) => {
       user: req.user,
     });
 
-    if (deletedCollection) {
-      let r1 = await deletedCollection
-        .insertMany(items.map((item) => item.toObject()))
-        .setOptions({
-          user: req.user,
-        });
-    }
+    // if (deletedCollection) {
+    //   let r1 = await deletedCollection
+    //     .insertMany(items.map((item) => item.toObject()))
+    //     .setOptions({
+    //       user: req.user,
+    //     });
+    // }
 
     let r2 = await collection.deleteMany({ _id: { $in: ids } }).setOptions({
       user: req.user,
@@ -229,7 +223,7 @@ router.get("/ad/:id", async (req, res) => {
 // get user favorite ads
 router.get("/favorites/:userId", async (req, res) => {
   try {
-    const user = await findOne({ _id: req.params.userId }).setOptions({
+    const user = await User.findOne({ _id: req.params.userId }).setOptions({
       user: req.user,
     });
     if (!user) {

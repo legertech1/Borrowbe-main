@@ -49,11 +49,17 @@ const accessCodeSchema = new mongoose.Schema(
       type: Map,
       of: permissionsSchema,
     },
-    access: {
+    pages: {
       required: true,
       default: {},
       type: Map,
       of: Boolean,
+    },
+    commands: {
+      required: true,
+      type: Map,
+      of: Boolean,
+      default: {},
     },
     hash: {
       type: String,
