@@ -174,8 +174,8 @@ router.post("/update-items", async (req, res) => {
       .setOptions({
         user: req.user,
       });
-
-    res.send({ info: "acknowledged" });
+    const docs = await collection.find({ _id: { $in: ids } });
+    res.send(docs);
   } catch (err) {
     res.status(500).send(err.message);
   }

@@ -126,6 +126,7 @@ router.post("/post-ad", authorize, async (req, res) => {
     sendUpdate("post-ad", "2", req.user._id);
     const listing = new Ad({
       user: req.user._id,
+      customerID: user?.customerID,
       listingID: await generateID("A"),
       ...ad,
       location: {

@@ -58,6 +58,9 @@ const adSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
     },
+    customerID: {
+      type: String,
+    },
     title: {
       type: String,
     },
@@ -195,7 +198,7 @@ adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
   }
 });
 adSchema.pre("save", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
   if (!user) return next();
   if (this.isModified("meta") || this.isModified("config")) {
     if (verifyAccess(user, this.constructor.collection.name, "override")) {

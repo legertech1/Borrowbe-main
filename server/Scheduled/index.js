@@ -23,6 +23,19 @@ const { updateOne } = require("../models/Counter");
 let state = {};
 let toCount = {};
 const test = {
+  assignCustomerIDs: async () => {
+    console.log("start");
+    const ads = await Ad.find({});
+    ads.forEach(async (ad) => {
+      user = await User?.findOne({ _id: ad?.user });
+      ad.customerID = user?.customerID;
+      if (!user.customerID) console.log(user);
+      // console.log(ad);
+      await ad.save();
+    });
+    console.log("done");
+  },
+
   randomMetaUpdater: async () => {
     console.log("update");
     const ads = await Ad.find({});
@@ -33,7 +46,6 @@ const test = {
       ad.meta.featured = !Boolean(Math.floor(Math.random() * 4));
       ad.meta.highlighted = !Boolean(Math.floor(Math.random() * 5));
       ad.meta.homepageGallery = !Boolean(Math.floor(Math.random() * 6));
-
 
       ad.meta.listingRank =
         Math.random() *
@@ -48,7 +60,7 @@ const test = {
           filter: { _id: ad._id },
           update: {
             meta: ad.meta,
-            priceHidden: !Boolean(Math.floor(Math.random() * 5))
+            priceHidden: !Boolean(Math.floor(Math.random() * 5)),
           },
         },
       });
@@ -382,7 +394,7 @@ async function updateAds() {
 }
 
 // schedule.scheduleJob("0 0 0 * * *", updateAds);
-// schedule.scheduleJob("0 0 0 * * *", updateStats);
+schedule.scheduleJob("0 0 0 * * *", updateStats);
 schedule.scheduleJob("*/30 * * * *", () => {
   memo.clear();
   memo.clearVerificationCodes();
@@ -390,17 +402,3 @@ schedule.scheduleJob("*/30 * * * *", () => {
 schedule.scheduleJob("*/2 * * * *", () => {
   memo.clearUsers();
 });
-
-// let seconds = 0;
-// setInterval(() => console.log(++seconds), 1000);
-
-// updateAds();
-// test.doubleAds();
-// test.randomMetaUpdater();
-// updateStats();
-
-// (async () => {
-//   const ad = (await Ad.find({}))[0];
-//   console.log(ad);
-//   console.log(verifyHash(ad.location))
-// })();
