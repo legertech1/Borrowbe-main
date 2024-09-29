@@ -115,7 +115,7 @@ paymentSchema.pre(
   }
 );
 paymentSchema.pre("save", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
 
   const key = this.options?.key;
   if (!user) return next();
@@ -141,7 +141,7 @@ paymentSchema.pre("save", function (next) {
   }
 });
 paymentSchema.pre("remove", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
   if (!user) return next();
 
   if (!user) {

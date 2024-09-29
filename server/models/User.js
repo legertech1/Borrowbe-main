@@ -139,12 +139,9 @@ userSchema.pre(["find", "findOne"], function (next) {
 // Pre-save hook
 userSchema.pre("save", function (next) {
   const user = this.options?.user;
-  const key = this.options.key;
+
   if (this.isModified("accessCode")) {
-    if (
-      verifyAccess(user, this.constructor.collection.name, "override") ||
-      key == process.env.ROOT_PASSKEY
-    ) {
+    if (verifyAccess(user, this.constructor.collection.name, "override")) {
       next();
     } else {
       throw new Error("Access Denied");
@@ -181,57 +178,47 @@ userSchema.pre(
   ["updateOne", "findOneAndUpdate", "updateMany"],
   function (next) {
     const user = this.getOptions().user;
-    const key = this.getOptions().key;
+
     const update = this.getUpdate();
 
     const requireOverride =
       (update.$set && update.$set["accessCode"]) || update.accessCode;
     if (requireOverride) {
-      if (
-        verifyAccess(user, this.model.collection.name, "override") ||
-        key == process.env.ROOT_PASSKEY
-      ) {
+      if (verifyAccess(user, this.model.collection.name, "override")) {
         next();
       } else {
         throw new Error("Access Denied");
       }
     }
     if (!user) return next();
+
     if (verifyAccess(user, this.model.collection.name, "update")) {
       return next();
     } else {
-      return new Error("Access Denied");
+      throw new Error("Access Denied");
     }
   }
 );
 
 // Pre-deleteOne hook
-userSchema.pre("deleteOne", function (next) {
-  const user = this.getOptions().user;
-  const key = this.getOptions().key;
-  if (!user) return next();
-
-  if (verifyAccess(user, this.model.collection.name, "delete")) {
-    return next();
-  } else {
-    throw new Error("Access Denied");
-  }
-});
 
 // Pre-updateMany hook
 
 // Pre-deleteMany hook
-userSchema.pre("deleteMany", function (next) {
-  const user = this.getOptions().user;
+userSchema.pre(
+  ["deleteMany", "deleteOne", "findOneAndDelete"],
+  function (next) {
+    const user = this.getOptions().user;
 
-  if (!user) return next();
+    if (!user) return next();
 
-  if (verifyAccess(user, this.model.collection.name, "delete")) {
-    return next();
-  } else {
-    throw new Error("Access Denied");
+    if (verifyAccess(user, this.model.collection.name, "delete")) {
+      return next();
+    } else {
+      throw new Error("Access Denied");
+    }
   }
-});
+);
 const User = db.model("User", userSchema);
 module.exports = {
   User,

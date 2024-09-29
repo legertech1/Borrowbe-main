@@ -178,7 +178,7 @@ adSchema.pre(["find", "findOne"], function (next) {
 adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
   const user = this.getOptions().user;
   const update = this.getUpdate();
-  const key = this.getOptions().key;
+
   if (!user) return next();
   if (
     (update.$set && (update.$set.config || update.$set.meta)) ||
@@ -193,8 +193,7 @@ adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
   if (verifyAccess(user, this.model.collection.name, "update")) {
     return next();
   } else {
-    this.getFilter().user = user._id;
-    return next();
+    throw new Error("Access Denied");
   }
 });
 adSchema.pre("save", function (next) {
@@ -219,7 +218,7 @@ adSchema.pre("save", function (next) {
   }
 });
 adSchema.pre("remove", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
 
   if (!user) return next();
 
