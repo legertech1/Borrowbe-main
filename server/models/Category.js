@@ -239,7 +239,7 @@ categorySchema.pre(["find", "findOne"], function (next) {
 // Pre-save hook
 categorySchema.pre("save", function (next) {
   const user = this.options?.user;
-
+  if (!user) throw new Error("Access Denied");
   if (
     this.isNew
       ? verifyAccess(user, this.constructor.collection.name, "create")

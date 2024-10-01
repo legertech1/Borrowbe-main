@@ -215,9 +215,12 @@ router.post("/update-items", async (req, res) => {
       .setOptions({
         user: req.user,
       });
-    const docs = await collection.find({ _id: { $in: ids } });
+    const docs = await collection.find({ _id: { $in: ids } }).setOptions({
+      user: req.user,
+    });
     res.send(docs);
   } catch (err) {
+    console.log(err);
     res.status(500).send(err.message);
   }
 });

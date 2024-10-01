@@ -76,8 +76,6 @@ const adSchema = new mongoose.Schema(
       required: false,
       min: 0,
       max: 100000000000000,
-      get: (v) => parseFloat(v.toFixed(2)), // Ensure the value always includes two decimal places when retrieved
-      set: (v) => parseFloat(v.toFixed(2)),
     },
     tax: {
       type: String,
@@ -185,7 +183,10 @@ adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
     update.meta ||
     update.config
   ) {
-    if (verifyAccess(user, this.model.collection.name, "override")) {
+    if (
+      verifyAccess(user, this.model.collection.name, "override") &&
+      verifyAccess(user, this.model.collection.name, "update")
+    ) {
       return next();
     } else throw new Error("Access Denied");
   }
@@ -200,7 +201,14 @@ adSchema.pre("save", function (next) {
   const user = this.options?.user;
   if (!user) return next();
   if (this.isModified("meta") || this.isModified("config")) {
-    if (verifyAccess(user, this.constructor.collection.name, "override")) {
+    if (
+      verifyAccess(
+        user,
+        this.constructor.collection.name,
+        "override" &&
+          verifyAccess(user, this.constructor.collection.name, "update")
+      )
+    ) {
       return next();
     } else {
       throw new Error("Access Denied");
@@ -230,7 +238,7 @@ adSchema.pre("remove", function (next) {
     else throw new Error("Access Denied");
   }
 });
-adSchema.pre(["deleteeMany", "findOneAndDelete", "deleteOne"], function (next) {
+adSchema.pre(["deleteMany", "findOneAndDelete", "deleteOne"], function (next) {
   const user = this.getOptions().user;
 
   if (!user) return next();
