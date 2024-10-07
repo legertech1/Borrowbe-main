@@ -10,6 +10,7 @@ const { Ad } = require("../models/Ad");
 const { Statistics } = require("../models/AdStatistics");
 const createGeoConstructQuery = require("./createGeoConstructQuery");
 const createLocationQuery = require("./createLocationQuery");
+const memo = require("../memo");
 
 module.exports = async function ({
   query = "",
@@ -56,11 +57,16 @@ module.exports = async function ({
         path: ["title", "tags"],
         fuzzy: {
           maxEdits: 2, // Adjust as needed
-         // maxExpansions: 100, // Adjust as needed
+          // maxExpansions: 100, // Adjust as needed
         },
       },
     };
-
+    if (count)
+      memo.countSearch({
+        query,
+        location,
+        category: category || "All Categories",
+      });
     resultPipeline.push({ $search: fuzzySearchQuery });
   }
   try {

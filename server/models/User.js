@@ -64,14 +64,17 @@ const dataSchema = new mongoose.Schema(
   { timestamps: false, _id: false, versionKey: false }
 );
 
-const configSchema = new mongoose.Schema({
-  notificationConfig: { type: Object, required: true },
-  emailConfig: { type: Object, required: true },
-  billingAddresses: {
-    CA: [addressSchema],
-    US: [addressSchema],
+const configSchema = new mongoose.Schema(
+  {
+    notificationConfig: { type: Object, required: true },
+    emailConfig: { type: Object, required: true },
+    billingAddresses: {
+      CA: [addressSchema],
+      US: [addressSchema],
+    },
   },
-});
+  { versionKey: false }
+);
 
 const userSchema = new mongoose.Schema(
   {
@@ -123,6 +126,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 // Pre-find hook
