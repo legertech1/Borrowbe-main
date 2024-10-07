@@ -442,7 +442,7 @@ router.get("/google/callback", async (req, res) => {
 router.get("/facebook", (req, res) => {
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=email&response_type=code&state=qfouihqewubqewui`;
 
-  res.redirect(process.env.FRONTEND_URI + authUrl);
+  res.redirect(authUrl);
 });
 
 router.get("/facebook/callback", async (req, res) => {
@@ -457,18 +457,47 @@ router.get("/facebook/callback", async (req, res) => {
   };
 
   try {
-    // Exchange code for access token
-    const response = await fetch(
-      `${accessTokenUrl}?${querystring.stringify(params)}`
+    const tokenResponse = await axios.get(accessTokenUrl, { params });
+    const accessToken = tokenResponse?.data?.access_token;
+
+    const { data } = await axios.get(`https://graph.facebook.com/me`, {
+      params: {
+        fields: "first_name,last_name,email,picture",
+        access_token: accessToken,
+      },
+    });
+    let user = await User?.findOne({ email: data.email });
+    if (user && user?._id) {
+      const authorizationToken = jwt.sign(
+        { id: user._id, time: Date.now() },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "30d",
+        }
+      );
+      res.cookie("auth", authorizationToken);
+      //send data
+      return res.redirect(process.env.FRONTEND_URI + "/");
+    }
+    user = new User({
+      customerID: await generateID("C"),
+      email: data.email,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      verified: true,
+      image: data.picture?.data?.url,
+    });
+    user.options = { key: process.env.SYS_PASSKEY };
+    await user.save();
+    const authorizationToken = jwt.sign(
+      { id: user._id, time: Date.now() },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
     );
-    const data = await response.json();
-
-    // Fetch user profile using access token
-    const profileUrl = `https://graph.facebook.com/me?fields=id,name,email&access_token=${data.access_token}`;
-    const profileResponse = await fetch(profileUrl);
-    const profileData = await profileResponse.json();
-
-    // Redirect user after successful authentication
+    res.cookie("auth", authorizationToken);
+    //send data
     res.redirect(process.env.FRONTEND_URI + "/");
   } catch (error) {
     console.error("Facebook authentication error:", error);
