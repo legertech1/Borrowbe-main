@@ -102,7 +102,7 @@ router.get("/searches", async (req, res) => {
       return res.status(200).send({ count: 0 }); // Handle case where no document is found
     }
 
-    res.status(200).send({ count: count.searches?.length || 0 });
+    res.status(200).send({ count: count.searches || 0 });
   } catch (err) {
     return res.status(500).send(err.message);
   }
