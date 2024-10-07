@@ -143,7 +143,7 @@ userSchema.pre(["find", "findOne"], function (next) {
 // Pre-save hook
 userSchema.pre("save", function (next) {
   const user = this.options?.user;
-
+  if (!user) return next();
   if (this.isModified("accessCode")) {
     if (verifyAccess(user, this.constructor.collection.name, "override")) {
       next();
@@ -151,7 +151,6 @@ userSchema.pre("save", function (next) {
       throw new Error("Access Denied");
     }
   }
-  if (!user) return next();
 
   if (
     this.isNew

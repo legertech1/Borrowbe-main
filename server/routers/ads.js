@@ -382,6 +382,7 @@ router.post("/search", async (req, res) => {
     }
     const { results, total, page } = await search({
       ...req.body,
+      count: req.body.impressions ? true : false,
       select: {
         thumbnails: 1,
         _id: 1,

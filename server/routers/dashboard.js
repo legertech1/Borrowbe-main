@@ -7,10 +7,15 @@ const memo = require("../memo");
 const { Category } = require("../models/Category");
 const { Payment } = require("../models/Payment");
 const { Analytics } = require("../models/Analytics");
+const verifyAccess = require("../utils/verifyAccess");
 
 router.get("/total-users", async (req, res) => {
+  if (!verifyAccess(req.user, "users", "read"))
+    return res.status(500).send("Access Denied");
   try {
-    const count = await User.countDocuments({});
+    const count = await User.countDocuments({}).setOptions({
+      user: req.user,
+    });
     res.status(200).send({ count });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -18,8 +23,10 @@ router.get("/total-users", async (req, res) => {
 });
 
 router.get("/total-ads", async (req, res) => {
+  if (!verifyAccess(req.user, "ads", "read"))
+    return res.status(500).send("Access Denied");
   try {
-    const count = await Ad.countDocuments({});
+    const count = await Ad.countDocuments({}).setOptions({ user: req.user });
     res.status(200).send({ count });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -27,6 +34,8 @@ router.get("/total-ads", async (req, res) => {
 });
 
 router.get("/active-users", async (req, res) => {
+  if (!verifyAccess(req.user, "users", "read"))
+    return res.status(500).send("Access Denied");
   try {
     res.status(200).send({ count: memo.countActiveUsers() });
   } catch (err) {
@@ -35,8 +44,12 @@ router.get("/active-users", async (req, res) => {
 });
 
 router.get("/active-ads", async (req, res) => {
+  if (!verifyAccess(req.user, "ads", "read"))
+    return res.status(500).send("Access Denied");
   try {
-    const count = await Ad.countDocuments({ "meta.status": "active" });
+    const count = await Ad.countDocuments({
+      "meta.status": "active",
+    }).setOptions({ user: req.user });
     res.status(200).send({ count });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -44,8 +57,12 @@ router.get("/active-ads", async (req, res) => {
 });
 
 router.get("/category-count", async (req, res) => {
+  if (!verifyAccess(req.user, "categories", "read"))
+    return res.status(500).send("Access Denied");
   try {
-    const count = await Category.countDocuments({ status: "active" });
+    const count = await Category.countDocuments({
+      status: "active",
+    }).setOptions({ user: req.user });
     res.status(200).send({ count });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -65,7 +82,7 @@ router.get("/revenue-today", async (req, res) => {
       amount: { $gt: 0 },
       type: "external",
       country: "CA",
-    });
+    }).setOptions({ user: req.user });
     let revenue = 0;
     for (let i = 0; i < payments.length; i++) {
       revenue += payments[i].amount; // Fixed the variable name to `payments[i].amount`
@@ -80,7 +97,9 @@ router.get("/visits", async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const count = await Analytics.findOne({ date: today });
+    const count = await Analytics.findOne({ date: today }).setOptions({
+      user: req.user,
+    });
 
     if (!count) {
       return res.status(200).send({ count: 0 }); // Handle case where no document is found
@@ -96,7 +115,9 @@ router.get("/searches", async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const count = await Analytics.findOne({ date: today });
+    const count = await Analytics.findOne({ date: today }).setOptions({
+      user: req.user,
+    });
 
     if (!count) {
       return res.status(200).send({ count: 0 }); // Handle case where no document is found
@@ -117,10 +138,10 @@ router.get("/users-gained/:days", async (req, res) => {
     // Fetch users created in the last 30 days
     const users = await User.find({
       createdAt: { $gte: thirtyDaysAgo },
-    });
+    }).setOptions({ user: req.user });
     const ads = await Ad.find({
       createdAt: { $gte: thirtyDaysAgo },
-    });
+    }).setOptions({ user: req.user });
     // Create an object to store user counts by date
     const userCountByDate = {};
 
@@ -169,7 +190,7 @@ router.get("/search-analytics/:days", async (req, res) => {
     thirtyDaysAgo.setDate(today.getDate() - Math.min(req.params.days || 7, 60));
     const stats = await Analytics.find({
       date: { $gte: thirtyDaysAgo },
-    });
+    }).setOptions({ user: req.user });
     const data = {};
     for (let i = Math.min(req.params.days || 7, 60); i >= 0; i--) {
       const dateKey = new Date(today);

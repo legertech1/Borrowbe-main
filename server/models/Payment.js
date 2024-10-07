@@ -88,8 +88,7 @@ paymentSchema.pre(["find", "findOne"], function (next) {
   if (verifyAccess(user, this.model.collection.name, "read")) {
     next();
   } else {
-    this.getFilter().user = user._id;
-    next();
+    throw new Error("Access Denied");
   }
 });
 paymentSchema.pre(
