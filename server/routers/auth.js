@@ -440,14 +440,18 @@ router.get("/google/callback", async (req, res) => {
   }
 });
 router.get("/facebook", (req, res) => {
-  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=email&response_type=code&state=qfouihqewubqewui`;
+  const origin = req.headers.referer || process.env.FRONTEND_URI;
+  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${
+    process.env.FACEBOOK_APP_ID
+  }&redirect_uri=${
+    process.env.FACEBOOK_REDIRECT_URI
+  }&scope=email&response_type=code&state=${encodeURIComponent(origin)}`;
 
   res.redirect(authUrl);
 });
 
 router.get("/facebook/callback", async (req, res) => {
-  const { code } = req.query;
-
+  const { code, state } = req.query;
   const accessTokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token`;
   const params = {
     client_id: process.env.FACEBOOK_APP_ID,
@@ -477,7 +481,7 @@ router.get("/facebook/callback", async (req, res) => {
       );
       res.cookie("auth", authorizationToken);
       //send data
-      return res.redirect(process.env.FRONTEND_URI + "/");
+      return res.redirect(state || process.env.FRONTEND_URI);
     }
     user = new User({
       customerID: await generateID("C"),
@@ -498,7 +502,7 @@ router.get("/facebook/callback", async (req, res) => {
     );
     res.cookie("auth", authorizationToken);
     //send data
-    res.redirect(process.env.FRONTEND_URI + "/");
+    res.redirect(state || process.env.FRONTEND_URI);
   } catch (error) {
     console.error("Facebook authentication error:", error);
     res.status(500).json({ error: "Failed to authenticate with Facebook" });
