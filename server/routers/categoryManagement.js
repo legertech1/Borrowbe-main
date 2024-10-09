@@ -123,12 +123,17 @@ router.post("/change-category-order", async (req, res) => {
     if (!ids) return res.status(400);
     for (let [ind, c] of categories.entries()) {
       if (c._id == ids[ind] && c.num == ind) continue;
-      ids.forEach(async (id, ind) => {
-        if (id == c._id && ind != c.num) {
-          c.num = ind;
-          await c.save();
+      for (let ind = 0; ind < ids.length; ind++) {
+        try {
+          if (ids[ind] == c._id && ind != c.num) {
+            c.num = ind;
+            c.options = { user: req.user };
+            await c.save();
+          }
+        } catch (err) {
+          return res.status(500).send(err.message);
         }
-      });
+      }
     }
 
     res.send("ok");
@@ -187,6 +192,7 @@ router.post("/change-sub-category-order/:id", async (req, res) => {
     if (subCategories.length != category.subCategories.length)
       return res.status(400).send("An error occurred");
     category.subCategories = subCategories;
+    category.options = { user: req.user };
     await category.save();
     res.send("ok");
   } catch (err) {
@@ -202,7 +208,7 @@ router.post("/make-category", async (req, res) => {
       ...req.body,
       active: false,
     });
-
+    category.options = { user: req.user };
     await category.save();
     const archive = new CategoryArchive({
       name,

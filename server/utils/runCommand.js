@@ -44,7 +44,6 @@ const commands = {
     });
 
     doc.accessCode.hash = createHash(doc.accessCode);
-    doc.options = { key: process.env.ROOT_PASSKEY };
 
     await doc.save();
     return {

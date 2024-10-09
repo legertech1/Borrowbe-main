@@ -13,6 +13,7 @@ const createListingMeta = require("../utils/createListingMeta");
 const { Balance } = require("../models/Balance");
 const { Payment } = require("../models/Payment");
 const { Category } = require("../models/Category");
+const { Analytics } = require("../models/Analytics");
 const countUserAds = require("../utils/countUserAds");
 const dayConstant = 1000 * 60 * 60 * 24;
 const errors = require("../utils/errors.json");
@@ -23,6 +24,19 @@ const { updateOne } = require("../models/Counter");
 let state = {};
 let toCount = {};
 const test = {
+  assignCustomerIDs: async () => {
+    console.log("start");
+    const ads = await Ad.find({});
+    ads.forEach(async (ad) => {
+      user = await User?.findOne({ _id: ad?.user });
+      ad.customerID = user?.customerID;
+      if (!user.customerID) console.log(user);
+      // console.log(ad);
+      await ad.save();
+    });
+    console.log("done");
+  },
+
   randomMetaUpdater: async () => {
     console.log("update");
     const ads = await Ad.find({});
@@ -33,7 +47,6 @@ const test = {
       ad.meta.featured = !Boolean(Math.floor(Math.random() * 4));
       ad.meta.highlighted = !Boolean(Math.floor(Math.random() * 5));
       ad.meta.homepageGallery = !Boolean(Math.floor(Math.random() * 6));
-
 
       ad.meta.listingRank =
         Math.random() *
@@ -48,7 +61,7 @@ const test = {
           filter: { _id: ad._id },
           update: {
             meta: ad.meta,
-            priceHidden: !Boolean(Math.floor(Math.random() * 5))
+            priceHidden: !Boolean(Math.floor(Math.random() * 5)),
           },
         },
       });
@@ -314,10 +327,16 @@ async function updateAd(ad, today) {
 
 async function updateStats() {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(today.getDate() - 30);
-  console.log(today.toLocaleDateString().replaceAll("/", "-"));
-  await Statistics.updateMany(
+  await Analytics.create({
+    date: today,
+    visits: 0,
+    searches: 0,
+    searchArr: [],
+  });
+  await await Statistics.updateMany(
     {},
     {
       $unset: {
@@ -381,8 +400,43 @@ async function updateAds() {
     });
 }
 
+async function updateAnalytics(data, tries = 0) {
+  let counts = {};
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // If data is not provided, get and clear memo counts
+    if (!data) {
+      counts = memo.getCounts(); // You were missing this assignment
+      memo.clearCounts();
+    } else {
+      counts = data;
+    }
+
+    // Perform the update
+    await Analytics.findOneAndUpdate(
+      { date: today },
+      {
+        $inc: {
+          visits: counts.visits || 0,
+          searches: counts.searches.length || 0, // This will count the number of searches
+        },
+        $push: { searchArr: { $each: counts.searches || [] } }, // Ensure to push an array, default to empty if not provided
+      }
+    );
+
+    console.log("Analytics updated successfully");
+  } catch (err) {
+    console.error("Error updating analytics:", err);
+    if (tries < 3) {
+      await updateAnalytics(counts, tries + 1);
+    }
+  }
+}
 // schedule.scheduleJob("0 0 0 * * *", updateAds);
-// schedule.scheduleJob("0 0 0 * * *", updateStats);
+schedule.scheduleJob("0 0 0 * * *", updateStats);
 schedule.scheduleJob("*/30 * * * *", () => {
   memo.clear();
   memo.clearVerificationCodes();
@@ -390,17 +444,7 @@ schedule.scheduleJob("*/30 * * * *", () => {
 schedule.scheduleJob("*/2 * * * *", () => {
   memo.clearUsers();
 });
-
-// let seconds = 0;
-// setInterval(() => console.log(++seconds), 1000);
-
-// updateAds();
-// test.doubleAds();
-// test.randomMetaUpdater();
+schedule.scheduleJob("*/5 * * * *", () => {
+  updateAnalytics();
+});
 // updateStats();
-
-// (async () => {
-//   const ad = (await Ad.find({}))[0];
-//   console.log(ad);
-//   console.log(verifyHash(ad.location))
-// })();

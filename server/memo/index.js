@@ -1,13 +1,20 @@
 let memo = {};
 let users = {};
 let verificationCodes = {};
+let counts = {
+  visits: 0,
+  searches: [],
+};
 
 module.exports = {
   find: (id) => {
     return memo[id];
   },
   insert: (id) => {
-    if (!memo[id]) memo[id] = {};
+    if (!memo[id]) {
+      counts.visits++;
+      memo[id] = {};
+    }
   },
   delete: (id) => {
     delete memo[id];
@@ -17,7 +24,6 @@ module.exports = {
     delete memo[b];
   },
   clear: () => {
-
     memo = {};
   },
   test: () => {
@@ -29,7 +35,6 @@ module.exports = {
   check: (a) => users[a],
   setInactive: (a) => delete users[a],
   clearUsers: () => {
-
     users = {};
   },
   setVerificationCode: (u, v, subject, email) => {
@@ -55,6 +60,18 @@ module.exports = {
       }
       if (Object.keys(vc).length == 0) delete vc;
     }
-    ("----------cleared verification codes ---------");
   },
+  countActiveUsers: () => {
+    return Object.keys(users).length;
+  },
+  clearCounts: () => {
+    counts = {
+      visits: 0,
+      searches: [],
+    };
+  },
+  countSearch: (search) => {
+    counts.searches.push(search);
+  },
+  getCounts: () => counts,
 };

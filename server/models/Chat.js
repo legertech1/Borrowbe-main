@@ -36,6 +36,7 @@ const chatSchema = new mongoose.Schema(
 
 // Pre-find hook
 chatSchema.pre("find", function (next) {
+  if (!this?.getOptions()?.user) return next();
   const user = this.getOptions().user;
   const key = this.getOptions().key;
 

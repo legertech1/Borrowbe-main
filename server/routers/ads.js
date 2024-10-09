@@ -126,6 +126,7 @@ router.post("/post-ad", authorize, async (req, res) => {
     sendUpdate("post-ad", "2", req.user._id);
     const listing = new Ad({
       user: req.user._id,
+      customerID: req.user?.customerID,
       listingID: await generateID("A"),
       ...ad,
       location: {
@@ -381,6 +382,7 @@ router.post("/search", async (req, res) => {
     }
     const { results, total, page } = await search({
       ...req.body,
+      count: req.body.impressions ? true : false,
       select: {
         thumbnails: 1,
         _id: 1,

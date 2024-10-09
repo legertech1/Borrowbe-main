@@ -9,6 +9,7 @@ const categoryRouter = require("./categoryManagement");
 const paymentRouter = require("./payments");
 const router = new express.Router();
 const documentRouter = require("./documents");
+const dashboardRouter = require("./dashboard");
 
 //open routes
 router.use("/auth", authRouter);
@@ -24,6 +25,7 @@ router.use("/categories", categoryRouter);
 router.use("/manage", managementRouter);
 //authorized routes
 router.use(authorize);
+router.use("/dashboard", dashboardRouter);
 
 //admin routes , only acessablefor admins
 

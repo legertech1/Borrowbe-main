@@ -5,15 +5,56 @@ const { User } = require("../models/User");
 const { DeletedUser } = require("../models/DeletedUser");
 const { Ad } = require("../models/Ad");
 const { DeletedAd } = require("../models/DeletedAd");
-
+const bcrypt = require("bcrypt");
 const { createHash, verifyHash } = require("../utils/processHashes");
 const runCommand = require("../utils/runCommand");
 const authorize = require("../utils/authorize");
+const createAvatar = require("../utils/createAvatar");
+const generateID = require("../utils/generateID");
+const { uploadImage } = require("../AWS");
 
 router.post("/command", async (req, res) => {
   res.send(await runCommand(req.body.command, req.body));
 });
 router.use(authorize);
+router.post("/create-user", async (req, res) => {
+  try {
+    //get the fields
+    const { firstName, lastName, email, password } = req.body;
+
+    //check if empty
+    if (!firstName || !email || !password)
+      return res.status(400).send({ error: errors["all-fields-required"] });
+
+    //check if duplicate
+    const exists = await User.findOne({ email });
+    if (exists)
+      return res.status(400).send({ error: errors["user-already-exists"] });
+
+    //hash password
+    const hash = await bcrypt.hash(password, 12);
+
+    //create profile picture
+    const avatar = createAvatar(firstName + " " + lastName);
+
+    //create user
+    const user = new User({
+      customerID: await generateID("C"),
+      email,
+      firstName,
+      lastName,
+      password: hash,
+      image: await uploadImage(avatar),
+      verified: true,
+    });
+    user.options = { user: req.user };
+    await user.save();
+    res.send(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err.message);
+  }
+});
 router.post("/update-access-code/:id", async (req, res) => {
   try {
     const accessCode = req.body.accessCode;
@@ -174,9 +215,12 @@ router.post("/update-items", async (req, res) => {
       .setOptions({
         user: req.user,
       });
-
-    res.send({ info: "acknowledged" });
+    const docs = await collection.find({ _id: { $in: ids } }).setOptions({
+      user: req.user,
+    });
+    res.send(docs);
   } catch (err) {
+    console.log(err);
     res.status(500).send(err.message);
   }
 });

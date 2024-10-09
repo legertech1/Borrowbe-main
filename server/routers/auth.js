@@ -42,7 +42,7 @@ router.post("/register", async (req, res) => {
     password: hash,
     image: await uploadImage(avatar),
   });
-  user.options = { key: process.env.SYS_PASSKEY };
+
   await user.save();
 
   //create token

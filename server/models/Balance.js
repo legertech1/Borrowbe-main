@@ -76,7 +76,7 @@ balanceSchema.pre(
 );
 
 balanceSchema.pre("save", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
 
   if (!user) return next();
   if (
@@ -90,7 +90,7 @@ balanceSchema.pre("save", function (next) {
 });
 
 balanceSchema.pre("remove", function (next) {
-  const user = this.options.user;
+  const user = this.options?.user;
 
   if (!user) return next();
   if (verifyAccess(user, this.constructor.collection.name, "delete")) {
