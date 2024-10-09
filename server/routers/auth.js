@@ -62,7 +62,7 @@ router.post("/register", async (req, res) => {
       start using Borrowbe.
     </p>
     <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
-    <p>This link is valid for an hour.</p>`,
+    <p>Please note: This link will expire in 1 hour. If you need a new link, feel free to request another.</p>`,
       heading: "Verify your email address",
     }),
   });
@@ -164,7 +164,7 @@ router.post("/login", async (req, res) => {
         start using Borrowbe.
       </p>
       <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
-      <p>This link is valid for an hour.</p>`,
+      <p>Please note: This link will expire in 1 hour. If you need a new link, feel free to request another.</p>`,
         heading: "Verify your email address",
       }),
     });
@@ -284,7 +284,7 @@ router.get("/forgot-password/:email", async (req, res) => {
       please use the link provided below to reset your password.
     </p>
     <a href="${process.env.FRONTEND_URI}/reset-password?token=${verificationToken}">reset password</a>
-    <p>This link is valid for an hour.</p>
+    <p>Please note: This link will expire in 1 hour. If you need a new link, feel free to request another.</p>
     <p class="light">*Ignore this email if you didn't request to reset your password*</p>`,
       heading: "Reset your Borrowbe password",
     }),
