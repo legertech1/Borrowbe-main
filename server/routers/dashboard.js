@@ -192,7 +192,7 @@ router.get("/search-analytics/:days", async (req, res) => {
       date: { $gte: thirtyDaysAgo },
     }).setOptions({ user: req.user });
     const data = {};
-    for (let i = Math.min(req.params.days || 7, 60); i >= 0; i--) {
+    for (let i = Math.min(req.params.days || 7, 60) - 1; i > 0; i--) {
       const dateKey = new Date(today);
       dateKey.setDate(today.getDate() - i);
       const formattedDate = dateKey.toISOString().split("T")[0];
