@@ -330,12 +330,13 @@ async function updateStats() {
   today.setHours(0, 0, 0, 0);
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(today.getDate() - 30);
-  await Analytics.create({
-    date: today,
-    visits: 0,
-    searches: 0,
-    searchArr: [],
-  });
+  if (!(await Analytics.findOne({ date: today })))
+    await Analytics.create({
+      date: today,
+      visits: 0,
+      searches: 0,
+      searchArr: [],
+    });
   await await Statistics.updateMany(
     {},
     {

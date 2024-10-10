@@ -4,6 +4,7 @@ const analyticsSchema = new mongoose.Schema({
   date: {
     type: Date, // Use Date type for efficient queries
     required: true,
+    unique: true,
   },
   searchArr: {
     type: [

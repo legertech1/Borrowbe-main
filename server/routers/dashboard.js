@@ -191,6 +191,7 @@ router.get("/search-analytics/:days", async (req, res) => {
     const stats = await Analytics.find({
       date: { $gte: thirtyDaysAgo },
     }).setOptions({ user: req.user });
+
     const data = {};
     for (let i = Math.min(req.params.days || 7, 60); i >= 0; i--) {
       const dateKey = new Date(today);
@@ -206,7 +207,10 @@ router.get("/search-analytics/:days", async (req, res) => {
 
       // If the date is not already a key in the object, initialize it
 
-      data[date] = { visits: stat.visits, searches: stat.searches };
+      data[date] = {
+        visits: Math.max(stat.visits, data[date].visits),
+        searches: Math.max(stat.searches, data[date].searches),
+      };
     });
     return res.send(data);
   } catch (err) {
