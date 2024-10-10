@@ -92,7 +92,7 @@ router.get("/verify", async (req, res) => {
   const user = await User.findOne({ _id: verified.id });
   if (user.verified) return res.redirect(process.env.FRONTEND_URI + "/");
   user.verified = true;
-  user.options = { key: process.env.SYS_PASSKEY };
+
   await user.save();
 
   //create authorization token
@@ -135,95 +135,100 @@ router.get("/verify", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  //get the fields
-  const { email, password, isMobileApp } = req.body;
+  try {
+    //get the fields
+    const { email, password, isMobileApp } = req.body;
 
-  //check if empty
-  if (!email || !password)
-    return res.status(400).send({ error: errors["email-pass-required"] });
+    //check if empty
+    if (!email || !password)
+      return res.status(400).send({ error: errors["email-pass-required"] });
 
-  //find user
-  const user = await User.findOne({ email });
-  if (!user) return res.status(401).send({ error: errors["user-not-found"] });
+    //find user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).send({ error: errors["user-not-found"] });
 
-  //check if verified
-  if (!user.verified) {
-    const verificationToken = jwt.sign(
-      { email, id: user._id, time: Date.now() },
+    //check if verified
+    if (!user.verified) {
+      const verificationToken = jwt.sign(
+        { email, id: user._id, time: Date.now() },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      sendMail({
+        from: "noreply@borrowbe.com",
+        to: email,
+        subject: "Verify your email address",
+        html: createEmailHtml({
+          content: `<p>Hey ${user.firstName},
+          please use the link provided below to verify your email address and
+          start using Borrowbe.
+        </p>
+        <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
+        <p>Please note: This link will expire in 1 hour. If you need a new link, feel free to request another.</p>`,
+          heading: "Verify your email address",
+        }),
+      });
+      return res.status(401).send({
+        error:
+          "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
+      });
+    }
+
+    //check if under lockdown
+    if (user.accountLocked)
+      return res.status(401).send({ error: errors["account-locked"] });
+
+    if (!user.password)
+      return res
+        .status(403)
+        .send(
+          "Password not created yet. please use Google or Facebook to login."
+        );
+    //check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    //increase risk in case of wrong password and send error
+
+    if (!isMatch) {
+      user.authenticationRisk += 1;
+
+      await user.save();
+      if (user.authenticationRisk >= 5) {
+        //initiate account lockdown
+        user.accountLocked = true;
+        await user.save();
+        return res.status(401).send({ error: errors["account-locked"] });
+      }
+      return res.status(401).send({ error: errors["wrong-password"] });
+    }
+
+    if (isMatch && user.authenticationRisk > 0) {
+      user.authenticationRisk = 0;
+
+      await user.save();
+    }
+    //create token
+    const authorizationToken = jwt.sign(
+      { id: user._id, time: Date.now() },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      {
+        expiresIn: "30d",
+      }
     );
 
-    sendMail({
-      from: "noreply@borrowbe.com",
-      to: email,
-      subject: "Verify your email address",
-      html: createEmailHtml({
-        content: `<p>Hey ${user.firstName},
-        please use the link provided below to verify your email address and
-        start using Borrowbe.
-      </p>
-      <a href="${process.env.BASE_URL}/api/auth/verify?token=${verificationToken}">verify account</a>
-      <p>Please note: This link will expire in 1 hour. If you need a new link, feel free to request another.</p>`,
-        heading: "Verify your email address",
-      }),
-    });
-    return res.status(401).send({
-      error:
-        "Your account has not been verified. A verification link has been resent to your email address. Please use it to verify your account.",
-    });
-  }
-
-  //check if under lockdown
-  if (user.accountLocked)
-    return res.status(401).send({ error: errors["account-locked"] });
-
-  if (!user.password)
-    return res
-      .status(403)
-      .send(
-        "Password not created yet. please use Google or Facebook to login."
-      );
-  //check password
-  const isMatch = await bcrypt.compare(password, user.password);
-  //increase risk in case of wrong password and send error
-  user.options = { user };
-  if (!isMatch) {
-    user.authenticationRisk += 1;
-    user.options = { key: process.env.SYS_PASSKEY };
-    await user.save();
-    if (user.authenticationRisk >= 5) {
-      //initiate account lockdown
-      user.accountLocked = true;
-      await user.save();
-      return res.status(401).send({ error: errors["account-locked"] });
+    if (isMobileApp) {
+      return res.status(200).send({
+        token: authorizationToken,
+      });
+    } else {
+      //set auth cookie
+      res.cookie("auth", authorizationToken);
+      //send data
+      res.status(200).send(user);
     }
-    return res.status(401).send({ error: errors["wrong-password"] });
-  }
-
-  if (isMatch) {
-    user.authenticationRisk = 0;
-    user.options = { key: process.env.SYS_PASSKEY };
-    await user.save();
-  }
-  //create token
-  const authorizationToken = jwt.sign(
-    { id: user._id, time: Date.now() },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "30d",
-    }
-  );
-
-  if (isMobileApp) {
-    return res.status(200).send({
-      token: authorizationToken,
-    });
-  } else {
-    //set auth cookie
-    res.cookie("auth", authorizationToken);
-    //send data
-    res.status(200).send(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err.message);
   }
 });
 
@@ -252,7 +257,7 @@ router.get("/me", async (req, res) => {
   //initiate account lockdown
   if (user.authenticationRisk >= 5) {
     user.accountLocked = true;
-    user.options = { key: process.env.SYS_PASSKEY };
+
     await user.save();
     return res.status(401).send({ error: errors["account-locked"] });
   }
@@ -324,14 +329,14 @@ router.post("/reset-password", async (req, res) => {
 
   //update password
   user.password = hash;
-  user.options = { key: process.env.SYS_PASSKEY };
+
   await user.save();
 
   //clear lockdown
   if (user.accountLocked) {
     user.accountLocked = false;
     user.authenticationRisk = 0;
-    user.options = { key: process.env.SYS_PASSKEY };
+    s;
     await user.save();
   }
 
@@ -419,7 +424,7 @@ router.get("/google/callback", async (req, res) => {
       verified: true,
       image: decoded.picture,
     });
-    user.options = { key: process.env.SYS_PASSKEY };
+
     await user.save();
     const authorizationToken = jwt.sign(
       { id: user._id, time: Date.now() },

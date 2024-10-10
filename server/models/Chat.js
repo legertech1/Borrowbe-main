@@ -37,8 +37,8 @@ const chatSchema = new mongoose.Schema(
 // Pre-find hook
 chatSchema.pre("find", function (next) {
   if (!this?.getOptions()?.user) return next();
-  const user = this.getOptions().user;
-  const key = this.getOptions().key;
+  const user = this.getOptions()?.user;
+  const key = this.getOptions()?.key;
 
   if (verifyAccess(user, this.model.collection.name, "read")) {
     return next();
@@ -87,8 +87,8 @@ chatSchema.pre("remove", function (next) {
 
 // Pre-updateOne hook
 chatSchema.pre(["updateOne", "findOneAndUpdate"], function (next) {
-  const user = this.getOptions().user;
-  const key = this.getOptions().key;
+  const user = this.getOptions()?.user;
+  const key = this.getOptions()?.key;
   if (!user) return next();
 
   if (!user) {
@@ -106,8 +106,8 @@ chatSchema.pre(["updateOne", "findOneAndUpdate"], function (next) {
 chatSchema.pre(
   ["deleteOne", "findOneAndDelete", "deleteMany"],
   function (next) {
-    const user = this.getOptions().user;
-    const key = this.getOptions().key;
+    const user = this.getOptions()?.user;
+    const key = this.getOptions()?.key;
     if (!user) return next();
 
     if (verifyAccess(user, this.model.collection.name, "delete")) {
@@ -120,8 +120,8 @@ chatSchema.pre(
 
 // Pre-updateMany hook
 chatSchema.pre("updateMany", function (next) {
-  const user = this.getOptions().user;
-  const key = this.getOptions().key;
+  const user = this.getOptions()?.user;
+  const key = this.getOptions()?.key;
   if (!user) return next();
 
   if (verifyAccess(user, this.model.collection.name, "update")) {

@@ -39,7 +39,7 @@ const balanceSchema = new mongoose.Schema(
 );
 
 balanceSchema.pre(["findOne", "find"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
 
   if (!user) return next();
 
@@ -54,7 +54,7 @@ balanceSchema.pre(["findOne", "find"], function (next) {
 balanceSchema.pre(
   ["updateOne", "updateMany", "findOneAndUpdate"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
 
     if (!user) return next();
 
@@ -66,7 +66,7 @@ balanceSchema.pre(
 balanceSchema.pre(
   ["deleteOne", "deleteMany", "findOneAndDelete"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
 
     if (!user) throw new Error("Access Denied");
     if (verifyAccess(user, this.model.collection.name, "delete")) {

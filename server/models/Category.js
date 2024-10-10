@@ -229,7 +229,7 @@ const categorySchema = new mongoose.Schema(
 );
 
 categorySchema.pre(["find", "findOne"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
   if (!user) return next();
   if (verifyAccess(user, this.model.collection.name, "read")) {
     return next();
@@ -270,7 +270,7 @@ categorySchema.pre("remove", function (next) {
 categorySchema.pre(
   ["updateOne", "updateMany", "findOneAndUpdate"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
 
     if (!user) {
       throw new Error("Access Denied");
@@ -288,7 +288,7 @@ categorySchema.pre(
 categorySchema.pre(
   ["deleteOne", "deleteMany", "findOneAndDelete"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
 
     if (verifyAccess(user, this.model.collection.name, "delete")) {
       return next();

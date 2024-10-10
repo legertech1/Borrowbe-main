@@ -167,14 +167,14 @@ adSchema.pre(
   }
 );
 adSchema.pre(["find", "findOne"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
   if (!user) return next();
   if (verifyAccess(user, this.model.collection.name, "read")) {
     return next();
   } else throw new Error("Access Denied");
 });
 adSchema.pre(["updateMany", "findOneAndUpdate", "updateOne"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
   const update = this.getUpdate();
 
   if (!user) return next();
@@ -239,7 +239,7 @@ adSchema.pre("remove", function (next) {
   }
 });
 adSchema.pre(["deleteMany", "findOneAndDelete", "deleteOne"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
 
   if (!user) return next();
 

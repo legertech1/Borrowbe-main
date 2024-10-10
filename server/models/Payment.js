@@ -81,7 +81,7 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 paymentSchema.pre(["find", "findOne"], function (next) {
-  const user = this.getOptions().user;
+  const user = this.getOptions()?.user;
   if (!user) return next();
 
   if (!user) throw new Error("Access Denied");
@@ -94,7 +94,7 @@ paymentSchema.pre(["find", "findOne"], function (next) {
 paymentSchema.pre(
   ["updateOne", "updateMany", "findOneAndUpdate"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
     if (!user) return next();
 
     if (!user) throw new Error("Access Denied");
@@ -106,7 +106,7 @@ paymentSchema.pre(
 paymentSchema.pre(
   ["deleteOne", "deleteMany", "findOneAndDelete"],
   function (next) {
-    const user = this.getOptions().user;
+    const user = this.getOptions()?.user;
     if (!user) throw new Error("Access Denied");
     if (verifyAccess(user, this.model.collection.name, "delete")) {
       next();
