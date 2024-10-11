@@ -509,7 +509,7 @@ router.get("/facebook/callback", async (req, res) => {
   }
 });
 router.post("/facebookMobile", async (req, res) => {
-  const { authenticationToken, code, platform } = req.body;
+  const { authenticationToken, platform } = req.body;
   try {
     let facebookUserData;
     if (platform == "ios") {
@@ -521,25 +521,33 @@ router.post("/facebookMobile", async (req, res) => {
 
       facebookUserData = decodedToken.payload;
     } else {
-      const accessTokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token`;
-      const params = {
-        client_id: process.env.FACEBOOK_APP_ID,
-        client_secret: process.env.FACEBOOK_APP_SECRET,
-        redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
-        code,
-      };
+      const { data: tokenData } = await axios.get(
+        `https://graph.facebook.com/debug_token`,
+        {
+          params: {
+            input_token: authenticationToken,
+            access_token: `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`,
+          },
+        }
+      );
 
-      const tokenResponse = await axios.get(accessTokenUrl, { params });
-      const accessToken = tokenResponse?.data?.access_token;
+      if (!tokenData.data || !tokenData.data.is_valid) {
+        return res.status(401).json({ error: "Invalid Facebook access token" });
+      }
 
-      const { data } = await axios.get(`https://graph.facebook.com/me`, {
-        params: {
-          fields: "first_name,last_name,email,picture",
-          access_token: accessToken,
-        },
-      });
+      // Step 2: Retrieve user data from Facebook using the accessToken
+      const { data: facebookUserData } = await axios.get(
+        `https://graph.facebook.com/me`,
+        {
+          params: {
+            fields: "first_name,last_name,email,picture",
+            access_token: authenticationToken,
+          },
+        }
+      );
       facebookUserData = data;
     }
+    console.log("facebookUserData", facebookUserData);
 
     let user = await User.findOne({ email: facebookUserData.email });
 
