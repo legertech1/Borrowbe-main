@@ -13,6 +13,10 @@ const memo = require("../memo");
 const { default: axios } = require("axios");
 const createEmailHtml = require("../utils/createEmailHtml");
 const sendNotification = require("../utils/sendNotification");
+const {
+  getFacebookAccessToken,
+  getFacebookUserData,
+} = require("../utils/facebookauth");
 
 router.post("/register", async (req, res) => {
   //get the fields
@@ -450,61 +454,80 @@ router.get("/facebook", (req, res) => {
   res.redirect(authUrl);
 });
 
-router.get("/facebook/callback", async (req, res) => {
-  const { code, state } = req.query;
-  const accessTokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token`;
-  const params = {
-    client_id: process.env.FACEBOOK_APP_ID,
-    client_secret: process.env.FACEBOOK_APP_SECRET,
-    redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
-    code,
-  };
+// Function to handle user authentication or registration
+const handleUserAuthentication = async (userData) => {
+  let user = await User.findOne({ email: userData.email });
 
-  try {
-    const tokenResponse = await axios.get(accessTokenUrl, { params });
-    const accessToken = tokenResponse?.data?.access_token;
-
-    const { data } = await axios.get(`https://graph.facebook.com/me`, {
-      params: {
-        fields: "first_name,last_name,email,picture",
-        access_token: accessToken,
-      },
-    });
-    let user = await User?.findOne({ email: data.email });
-    if (user && user?._id) {
-      const authorizationToken = jwt.sign(
-        { id: user._id, time: Date.now() },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "30d",
-        }
-      );
-      res.cookie("auth", authorizationToken);
-      //send data
-      return res.redirect(state || process.env.FRONTEND_URI);
-    }
+  if (!user) {
     user = new User({
       customerID: await generateID("C"),
-      email: data.email,
-      firstName: data.first_name,
-      lastName: data.last_name,
+      email: userData.email,
+      firstName: userData.first_name,
+      lastName: userData.last_name,
       verified: true,
-      image: data.picture?.data?.url,
+      image: userData.picture?.data?.url,
+      options: { key: process.env.SYS_PASSKEY },
     });
-    user.options = { key: process.env.SYS_PASSKEY };
     await user.save();
-    const authorizationToken = jwt.sign(
-      { id: user._id, time: Date.now() },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      }
-    );
+  }
+
+  const authorizationToken = jwt.sign(
+    { id: user._id, time: Date.now() },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  return authorizationToken;
+};
+
+// Facebook OAuth Callback (Web)
+router.get("/facebook/callback", async (req, res) => {
+  const { code, state } = req.query;
+
+  try {
+    const accessToken = await getFacebookAccessToken(code);
+    const facebookUserData = await getFacebookUserData(accessToken);
+    const authorizationToken = await handleUserAuthentication(facebookUserData);
+
     res.cookie("auth", authorizationToken);
-    //send data
-    res.redirect(state || process.env.FRONTEND_URI);
+    return res.redirect(state || process.env.FRONTEND_URI);
   } catch (error) {
     console.error("Facebook authentication error:", error);
+    res.status(500).json({ error: "Failed to authenticate with Facebook" });
+  }
+});
+
+// Facebook OAuth (Mobile)
+router.post("/facebookMobile", async (req, res) => {
+  const { authenticationToken, code, platform } = req.body;
+  try {
+    if (platform == "android") {
+      const accessToken = await getFacebookAccessToken(code);
+      const facebookUserData = await getFacebookUserData(accessToken);
+      const authorizationToken = await handleUserAuthentication(
+        facebookUserData
+      );
+      return res.status(200).send({ token: authorizationToken });
+    } else {
+      const decodedToken = jwt.decode(authenticationToken, { complete: true });
+
+      if (!decodedToken) {
+        return res.status(401).json({ error: "Invalid Facebook access token" });
+      }
+
+      const facebookUserData = decodedToken.payload;
+
+      const authorizationToken = await handleUserAuthentication(
+        facebookUserData
+      );
+
+      return res.status(200).send({ token: authorizationToken });
+    }
+  } catch (error) {
+    console.error(
+      "Facebook authentication error:",
+      error?.response?.data || error
+    );
     res.status(500).json({ error: "Failed to authenticate with Facebook" });
   }
 });
