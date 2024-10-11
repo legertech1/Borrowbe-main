@@ -536,15 +536,12 @@ router.post("/facebookMobile", async (req, res) => {
       }
 
       // Step 2: Retrieve user data from Facebook using the accessToken
-      const { data: facebookUserData } = await axios.get(
-        `https://graph.facebook.com/me`,
-        {
-          params: {
-            fields: "first_name,last_name,email,picture",
-            access_token: authenticationToken,
-          },
-        }
-      );
+      const { data } = await axios.get(`https://graph.facebook.com/me`, {
+        params: {
+          fields: "first_name,last_name,email,picture",
+          access_token: authenticationToken,
+        },
+      });
       facebookUserData = data;
     }
     console.log("facebookUserData", facebookUserData);
