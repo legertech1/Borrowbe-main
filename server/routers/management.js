@@ -62,6 +62,7 @@ router.post("/update-access-code/:id", async (req, res) => {
       { _id: req.params.id },
       {
         accessCode: {
+          user: req.params.id,
           ...accessCode,
           hash: createHash(accessCode),
         },
