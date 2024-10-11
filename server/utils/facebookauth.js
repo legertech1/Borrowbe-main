@@ -1,3 +1,5 @@
+const { default: axios } = require("axios");
+
 const getFacebookAccessToken = async (code) => {
   const accessTokenUrl = `https://graph.facebook.com/v19.0/oauth_access_token`;
 
