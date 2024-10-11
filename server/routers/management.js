@@ -87,7 +87,7 @@ router.delete("/:id", async (req, res) => {
 
 router.post("/search", async (req, res) => {
   try {
-    const { filters, count, collectionName, page } = req.body; // Added 'page' parameter
+    const { filters, count, collectionName, page, sort } = req.body; // Added 'page' parameter
 
     const limit = count || 10;
     const pageNumber = page || 1; // Added 'page' parameter
@@ -108,6 +108,7 @@ router.post("/search", async (req, res) => {
     // Handle pagination for other collections
     const results = await collection
       .find(filters || {})
+      .sort(sort || { _id: -1 })
       .skip((pageNumber - 1) * limit)
       .limit(limit)
       .select(
