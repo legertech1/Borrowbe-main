@@ -291,4 +291,47 @@ router.get("/favorites/:userId", async (req, res) => {
   }
 });
 
+router.get("/mark/:collection/:id", async (req, res) => {
+  try {
+    let collection = null;
+    switch (req.params.collection) {
+      case "Ad":
+        collection = Ad;
+        break;
+      case "User":
+        collection = User;
+        break;
+      default:
+        return res.status(400).send("Invalid type");
+    }
+    await collection
+      ?.findOneAndUpdate({ _id: req.params.id }, { marked: true })
+      .setOptions({ user: req.user });
+    res.send({ info: "acknowledged" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+router.get("/unmark/:collection/:id", async (req, res) => {
+  try {
+    let collection = null;
+    switch (req.params.collection) {
+      case "Ad":
+        collection = Ad;
+        break;
+      case "User":
+        collection = User;
+        break;
+      default:
+        return res.status(400).send("Invalid type");
+    }
+    await collection
+      ?.findOneAndUpdate({ _id: req.params.id }, { marked: false })
+      .setOptions({ user: req.user });
+    res.send({ info: "acknowledged" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 module.exports = router;

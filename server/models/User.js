@@ -123,6 +123,7 @@ const userSchema = new mongoose.Schema(
       type: accessCodeSchema,
       required: false,
     },
+    marked: { type: Boolean, required: false },
   },
   {
     timestamps: true,

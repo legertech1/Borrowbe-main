@@ -13,7 +13,9 @@ router.get("/total-users", async (req, res) => {
   if (!verifyAccess(req.user, "users", "read"))
     return res.status(500).send("Access Denied");
   try {
-    const count = await User.countDocuments({}).setOptions({
+    const count = await User.countDocuments({
+      marked: { $ne: true },
+    }).setOptions({
       user: req.user,
     });
     res.status(200).send({ count });
@@ -26,7 +28,9 @@ router.get("/total-ads", async (req, res) => {
   if (!verifyAccess(req.user, "ads", "read"))
     return res.status(500).send("Access Denied");
   try {
-    const count = await Ad.countDocuments({}).setOptions({ user: req.user });
+    const count = await Ad.countDocuments({
+      marked: { $ne: true },
+    }).setOptions({ user: req.user });
     res.status(200).send({ count });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -49,6 +53,7 @@ router.get("/active-ads", async (req, res) => {
   try {
     const count = await Ad.countDocuments({
       "meta.status": "active",
+      marked: { $ne: true },
     }).setOptions({ user: req.user });
     res.status(200).send({ count });
   } catch (err) {
@@ -131,16 +136,18 @@ router.get("/searches", async (req, res) => {
 router.get("/users-gained/:days", async (req, res) => {
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // today.setHours(0, 0, 0, 0);
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - Math.min(req.params.days || 7, 60));
 
     // Fetch users created in the last 30 days
     const users = await User.find({
-      createdAt: { $gte: thirtyDaysAgo },
+      createdAt: { $gte: thirtyDaysAgo, $lt: Date.now() },
+      marked: { $ne: true },
     }).setOptions({ user: req.user });
     const ads = await Ad.find({
-      createdAt: { $gte: thirtyDaysAgo },
+      createdAt: { $gte: thirtyDaysAgo, $lt: Date.now() },
+      marked: { $ne: true },
     }).setOptions({ user: req.user });
     // Create an object to store user counts by date
     const userCountByDate = {};
@@ -185,11 +192,11 @@ router.get("/users-gained/:days", async (req, res) => {
 router.get("/search-analytics/:days", async (req, res) => {
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // today.setHours(0, 0, 0, 0);
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - Math.min(req.params.days || 7, 60));
     const stats = await Analytics.find({
-      date: { $gte: thirtyDaysAgo },
+      date: { $gte: thirtyDaysAgo, $lt: Date.now() },
     }).setOptions({ user: req.user });
 
     const data = {};
@@ -202,6 +209,7 @@ router.get("/search-analytics/:days", async (req, res) => {
 
       data[formattedDate] = { visits: 0, searches: 0 };
     }
+
     stats.forEach((stat) => {
       const date = stat.date.toISOString().split("T")[0]; // Format date as YYYY-MM-DD
 

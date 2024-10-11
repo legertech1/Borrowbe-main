@@ -87,6 +87,10 @@ const adSchema = new mongoose.Schema(
     },
     term: {
       type: String,
+      validate: {
+        validator: (v) => ["Day", "Week", "Month", "Year"],
+        message: "invalid term value",
+      },
     },
     thumbnails: [String],
     images: [String],
@@ -111,6 +115,7 @@ const adSchema = new mongoose.Schema(
       hash: { type: String },
     },
     meta: { type: metaSchema, required: true },
+    marked: { type: Boolean, required: false },
   },
   { timestamps: true }
 );
