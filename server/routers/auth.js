@@ -509,15 +509,38 @@ router.get("/facebook/callback", async (req, res) => {
   }
 });
 router.post("/facebookMobile", async (req, res) => {
-  const { accessToken } = req.body;
+  const { authenticationToken, code, platform } = req.body;
   try {
-    const decodedToken = jwt.decode(accessToken, { complete: true });
+    let facebookUserData;
+    if (platform == "ios") {
+      const decodedToken = jwt.decode(authenticationToken, { complete: true });
 
-    if (!decodedToken) {
-      return res.status(401).json({ error: "Invalid Facebook access token" });
+      if (!decodedToken) {
+        return res.status(401).json({ error: "Invalid Facebook access token" });
+      }
+
+      facebookUserData = decodedToken.payload;
+    } else {
+      const accessTokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token`;
+      const params = {
+        client_id: process.env.FACEBOOK_APP_ID,
+        client_secret: process.env.FACEBOOK_APP_SECRET,
+        redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
+        code,
+      };
+
+      const tokenResponse = await axios.get(accessTokenUrl, { params });
+      const accessToken = tokenResponse?.data?.access_token;
+
+      const { data } = await axios.get(`https://graph.facebook.com/me`, {
+        params: {
+          fields: "first_name,last_name,email,picture",
+          access_token: accessToken,
+        },
+      });
+      facebookUserData = data;
     }
 
-    const facebookUserData = decodedToken.payload;
     let user = await User.findOne({ email: facebookUserData.email });
 
     if (user && user._id) {
