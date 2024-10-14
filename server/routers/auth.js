@@ -379,7 +379,7 @@ router.get("/google", (req, res) => {
   res.redirect(authUrl);
 });
 router.get("/google/callback", async (req, res) => {
-  const { code } = req.query;
+  const { code, isMobileApp } = req.query;
 
   try {
     const tokenResponse = await axios.post(
@@ -407,9 +407,14 @@ router.get("/google/callback", async (req, res) => {
           expiresIn: "30d",
         }
       );
-      res.cookie("auth", authorizationToken);
-      //send data
-      return res.redirect(process.env.FRONTEND_URI + "/");
+      if (isMobileApp == "true") {
+        return res.status(200).send({
+          token: authorizationToken,
+        });
+      } else {
+        res.cookie("auth", authorizationToken);
+        return res.redirect(process.env.FRONTEND_URI + "/");
+      }
     }
     user = new User({
       customerID: await generateID("C"),
@@ -428,9 +433,15 @@ router.get("/google/callback", async (req, res) => {
         expiresIn: "30d",
       }
     );
-    res.cookie("auth", authorizationToken);
-    //send data
-    return res.redirect(process.env.FRONTEND_URI + "/");
+
+    if (isMobileApp == "true") {
+      return res.status(200).send({
+        token: authorizationToken,
+      });
+    } else {
+      res.cookie("auth", authorizationToken);
+      return res.redirect(process.env.FRONTEND_URI + "/");
+    }
   } catch (error) {
     console.error(
       "Error exchanging authorization code for access token:",
