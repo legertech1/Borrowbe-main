@@ -15,17 +15,13 @@ async function sendChats(socket, channel) {
 
     .sort({ updatedAt: -1 })
     .lean();
-  const people = [];
-  const ads = [];
-
-  for (let i = 0; i < chats.length; i++) {
-    socket.join(chats[i]._id.toString());
-    people.push(
-      chats[i].participants.filter((i) => i != socket.user._id.toString())[0] ||
-        ""
-    );
-    ads.push(chats[i].ad || "");
-  }
+  const people = chats.map(
+    (chat) =>
+      chat.participants.find(
+        (participant) => participant != socket.user._id.toString()
+      ) || ""
+  );
+  const ads = chats.map((chat) => chat.ad || "");
   const userDocs = await User.find({ _id: { $in: people } }).lean();
   const adDocs = await Ad.find({ _id: { $in: ads } }).lean();
 
@@ -38,6 +34,7 @@ async function sendChats(socket, channel) {
 
   let data = [];
   for (chat of chats) {
+    socket.join(chat._id.toString());
     const parsed = await parseChat(
       chat,
       socket.user._id.toString(),
@@ -54,9 +51,10 @@ async function sendChats(socket, channel) {
         title: "Ad has been deleted",
         image: "",
         thumbnails: [""],
-        location: { name: "" },
-        price: "",
-        term: "",
+        location: { name: "No location data available" },
+        price: null,
+        listingID: "DELETED",
+        term: null,
       }
     );
     if (parsed) data.push(parsed);
@@ -113,8 +111,20 @@ function verifyUser(socket, chatId) {
 module.exports = function (socket) {
   socket.join(socket?.user?._id?.toString());
 
-  socket.on("send_message", async (message) => {
-    try {
+  // Helper function to wrap event handlers
+  const wrapHandler = (handler) => {
+    return async (...args) => {
+      try {
+        await handler(...args);
+      } catch (error) {
+        console.error("Error in event handler:", error);
+      }
+    };
+  };
+
+  socket.on(
+    "send_message",
+    wrapHandler(async (message) => {
       if (message.from != socket.user._id) return;
       if (message.from == message.to) return;
       if (message.message == "") return;
@@ -174,173 +184,209 @@ module.exports = function (socket) {
         });
       }
       await sendPushNotification(message, message.to, message.from, message.ad);
-    } catch (error) {
-      console.log("error: ", error);
-    }
-  });
+    })
+  );
 
-  socket.on("load_chats", async () => {
-    sendChats(socket);
-  });
+  socket.on(
+    "load_chats",
+    wrapHandler(async () => {
+      sendChats(socket);
+    })
+  );
 
-  socket.on("typing", ({ userId, chatId }) => {
-    verifyUser(socket, chatId);
-    socket.nsp.in(chatId).emit("user_typing", { userId, chatId });
-  });
-  socket.on("stopped_typing", ({ userId, chatId }) => {
-    verifyUser(socket, chatId);
-    socket.nsp.in(chatId).emit("user_stopped_typing", { userId, chatId });
-  });
+  socket.on(
+    "typing",
+    wrapHandler(({ userId, chatId }) => {
+      verifyUser(socket, chatId);
+      socket.nsp.in(chatId).emit("user_typing", { userId, chatId });
+    })
+  );
 
-  socket.on("load_messages", async ({ chatId, limit, page }) => {
-    let lmt = limit || 20;
-    let pg = page || 1;
-    let chat = await Chat.findOne({ _id: chatId });
-    if (!chat) return;
+  socket.on(
+    "stopped_typing",
+    wrapHandler(({ userId, chatId }) => {
+      verifyUser(socket, chatId);
+      socket.nsp.in(chatId).emit("user_stopped_typing", { userId, chatId });
+    })
+  );
 
-    const totalMessages = chat.messages.length;
+  socket.on(
+    "load_messages",
+    wrapHandler(async ({ chatId, limit, page }) => {
+      let lmt = limit || 20;
+      let pg = page || 1;
+      let chat = await Chat.findOne({ _id: chatId });
+      if (!chat) return;
 
-    const startIndex = Math.max(0, totalMessages - lmt * pg);
-    const endIndex = totalMessages - lmt * (pg - 1);
+      const totalMessages = chat.messages.length;
 
-    let messagesToSend = chat.messages.slice(startIndex, endIndex);
+      const startIndex = Math.max(0, totalMessages - lmt * pg);
+      const endIndex = totalMessages - lmt * (pg - 1);
 
-    if (endIndex === totalMessages && totalMessages < lmt) {
-      messagesToSend = chat.messages.slice(0, totalMessages);
-    }
+      let messagesToSend = chat.messages.slice(startIndex, endIndex);
 
-    socket.emit("send_messages", {
-      messages: messagesToSend,
-      _id: chatId,
-    });
-  });
-
-  socket.on("block_chat", async ({ userId, chatId }) => {
-    verifyUser(socket, chatId);
-    const chat = await Chat.findOne({ _id: chatId });
-    chat.blockedBy = [...chat.blockedBy.filter((x) => x != userId), userId];
-
-    await chat.save();
-    let data = await parseChat(chat, socket.user._id.toString());
-    socket.nsp.in(chatId).emit("chat_blocked", data);
-  });
-  socket.on("unblock_chat", async ({ userId, chatId }) => {
-    verifyUser(socket, chatId);
-    const chat = await Chat.findOne({ _id: chatId });
-    chat.blockedBy = [...chat.blockedBy.filter((x) => x != userId)];
-
-    await chat.save();
-    let data = await parseChat(chat, socket.user._id.toString());
-
-    socket.nsp.in(chatId).emit("chat_unblocked", data);
-  });
-  socket.on("delete_chat", async (chatId) => {
-    verifyUser(socket, chatId);
-    await Chat.findOneAndUpdate(
-      { _id: chatId },
-      { $push: { deletedBy: socket?.user?._id } }
-    );
-
-    socket.emit("chat_deleted", chatId);
-  });
-
-  socket.on("message_read", async (chatId, messageId) => {
-    verifyUser(socket, chatId);
-
-    const chat = await Chat.findOneAndUpdate(
-      { _id: chatId },
-      { $set: { "messages.$[x].read": true } },
-      {
-        multi: true,
-        arrayFilters: [{ "x._id": messageId, "x.to": socket?.user?._id }],
-        new: true,
+      if (endIndex === totalMessages && totalMessages < lmt) {
+        messagesToSend = chat.messages.slice(0, totalMessages);
       }
-    );
-    const message = chat.messages.reduce(
-      (a, m) => (m._id == messageId ? m : a),
-      null
-    );
-    socket.nsp.in(chatId).emit("user_read_message", { chatId, message });
-  });
 
-  socket.on("delete_message", async (chatId, messageId) => {
-    verifyUser(socket, chatId);
+      socket.emit("send_messages", {
+        messages: messagesToSend,
+        _id: chatId,
+      });
+    })
+  );
 
-    const twoHoursAgo = new Date();
-    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-    const chat = await Chat.findOneAndUpdate(
-      { _id: chatId },
-      {
-        $set: { "messages.$[x].type": "deleted", "messages.$[x].message": "." },
-      },
-      {
-        multi: true,
-        arrayFilters: [
-          {
-            "x._id": messageId,
-            "x.from": socket?.user?._id,
-            "x.createdAt": { $gte: twoHoursAgo },
+  socket.on(
+    "block_chat",
+    wrapHandler(async ({ userId, chatId }) => {
+      verifyUser(socket, chatId);
+      const chat = await Chat.findOne({ _id: chatId });
+      chat.blockedBy = [...chat.blockedBy.filter((x) => x != userId), userId];
+      await chat.save();
+      let data = await parseChat(chat, socket.user._id.toString());
+      socket.nsp.in(chatId).emit("chat_blocked", data);
+    })
+  );
+
+  socket.on(
+    "unblock_chat",
+    wrapHandler(async ({ userId, chatId }) => {
+      verifyUser(socket, chatId);
+      const chat = await Chat.findOne({ _id: chatId });
+      chat.blockedBy = [...chat.blockedBy.filter((x) => x != userId)];
+      await chat.save();
+      let data = await parseChat(chat, socket.user._id.toString());
+      socket.nsp.in(chatId).emit("chat_unblocked", data);
+    })
+  );
+
+  socket.on(
+    "delete_chat",
+    wrapHandler(async (chatId) => {
+      verifyUser(socket, chatId);
+      await Chat.findOneAndUpdate(
+        { _id: chatId },
+        { $push: { deletedBy: socket?.user?._id } }
+      );
+      socket.emit("chat_deleted", chatId);
+    })
+  );
+
+  socket.on(
+    "message_read",
+    wrapHandler(async (chatId, messageId) => {
+      verifyUser(socket, chatId);
+      const chat = await Chat.findOneAndUpdate(
+        { _id: chatId },
+        { $set: { "messages.$[x].read": true } },
+        {
+          multi: true,
+          arrayFilters: [{ "x._id": messageId, "x.to": socket?.user?._id }],
+          new: true,
+        }
+      );
+      const message = chat.messages.reduce(
+        (a, m) => (m._id == messageId ? m : a),
+        null
+      );
+      socket.nsp.in(chatId).emit("user_read_message", { chatId, message });
+    })
+  );
+
+  socket.on(
+    "delete_message",
+    wrapHandler(async (chatId, messageId) => {
+      console.log(chatId, messageId);
+      verifyUser(socket, chatId);
+      const twoHoursAgo = new Date();
+      twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+      const chat = await Chat.findOneAndUpdate(
+        { _id: chatId },
+        {
+          $set: {
+            "messages.$[x].type": "deleted",
+            "messages.$[x].message": ".",
           },
-        ],
-        new: true,
+        },
+        {
+          multi: true,
+          arrayFilters: [
+            {
+              "x._id": messageId,
+              "x.from": socket?.user?._id,
+              "x.createdAt": { $gte: twoHoursAgo },
+            },
+          ],
+          new: true,
+        }
+      );
+      const message = chat.messages.reduce(
+        (a, m) => (m._id == messageId ? m : a),
+        null
+      );
+      socket.nsp.in(chatId).emit("user_deleted_message", { chatId, message });
+    })
+  );
+
+  socket.on(
+    "get_notifications",
+    wrapHandler(async (page) => {
+      let notifications = await Notification.findOne({
+        user: socket?.user?._id,
+      });
+      if (!notifications) {
+        notifications = new Notification({ user: socket.user._id, data: [] });
+        await notifications.save();
       }
-    );
-    const message = chat.messages.reduce(
-      (a, m) => (m._id == messageId ? m : a),
-      null
-    );
-    socket.nsp.in(chatId).emit("user_deleted_message", { chatId, message });
-  });
+      if (notifications?.data?.length > 50) {
+        notifications.data = notifications.data.slice(
+          notifications.data.length - 50,
+          notifications.data.length
+        );
+        await notifications.save();
+      }
+      socket.emit("load_notifications", notifications?.data || []);
+    })
+  );
 
-  socket.on("get_notifications", async (page) => {
-    let notifications = await Notification.findOne({
-      user: socket?.user?._id,
-    });
-    if (!notifications) {
-      notifications = new Notification({ user: socket.user._id, data: [] });
+  socket.on(
+    "notification_read",
+    wrapHandler(async (id) => {
+      const notifications = await Notification.findOneAndUpdate(
+        {
+          user: socket?.user?._id,
+        },
+        { $set: { "data.$[x].read": true } },
+        {
+          multi: true,
+          arrayFilters: [{ "x._id": id }],
+          new: true,
+        }
+      );
+      socket.emit(
+        "notification_update",
+        notifications?.data?.reduce(
+          (acc, i) => (i._id == id ? i : acc),
+          null
+        ) || {}
+      );
+    })
+  );
 
-      await notifications.save();
-    }
-    if (notifications?.data?.length > 50) {
-      notifications.data = notifications.data.slice(
-        notifications.data.length - 50,
-        notifications.data.length
+  socket.on(
+    "delete_notification",
+    wrapHandler(async (notif) => {
+      const notifications = await Notification.findOneAndUpdate(
+        {
+          user: socket?.user?._id,
+        },
+        { $pull: { data: notif } },
+        {
+          new: true,
+        }
       );
 
-      await notifications.save();
-    }
-    socket.emit("load_notifications", notifications?.data || []);
-  });
-
-  socket.on("notification_read", async (id) => {
-    const notifications = await Notification.findOneAndUpdate(
-      {
-        user: socket?.user?._id,
-      },
-      { $set: { "data.$[x].read": true } },
-      {
-        multi: true,
-        arrayFilters: [{ "x._id": id }],
-        new: true,
-      }
-    );
-    socket.emit(
-      "notification_update",
-      notifications?.data?.reduce((acc, i) => (i._id == id ? i : acc), null) ||
-        {}
-    );
-  });
-  socket.on("delete_notification", async (notif) => {
-    const notifications = await Notification.findOneAndUpdate(
-      {
-        user: socket?.user?._id,
-      },
-      { $pull: { data: notif } },
-      {
-        new: true,
-      }
-    );
-
-    socket.emit("notification_deleted", notif._id);
-  });
+      socket.emit("notification_deleted", notif._id);
+    })
+  );
 };

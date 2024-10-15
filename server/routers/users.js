@@ -161,7 +161,12 @@ router.get("/:id", async (req, res) => {
 
 router.use(authorize);
 router.get("/get-status/:id", async (req, res) => {
-  res.send({ active: memo.check(req.params.id) });
+  try {
+    return res.send({ active: memo.check(req.params.id) });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(errors["unexpected-error"]);
+  }
 });
 
 router.put("/:id", async (req, res) => {
