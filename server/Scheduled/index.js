@@ -437,7 +437,7 @@ async function updateAnalytics(data, tries = 0) {
   }
 }
 // schedule.scheduleJob("0 0 0 * * *", updateAds);
-schedule.scheduleJob("0 0 0 * * *", updateStats);
+// schedule.scheduleJob("0 0 0 * * *", updateStats);
 schedule.scheduleJob("*/30 * * * *", () => {
   memo.clear();
   memo.clearVerificationCodes();
@@ -445,7 +445,6 @@ schedule.scheduleJob("*/30 * * * *", () => {
 schedule.scheduleJob("*/2 * * * *", () => {
   memo.clearUsers();
 });
-schedule.scheduleJob("*/5 * * * *", () => {
-  updateAnalytics();
-});
-// updateStats();
+// schedule.scheduleJob("*/5 * * * *", () => {
+//   updateAnalytics();
+// });

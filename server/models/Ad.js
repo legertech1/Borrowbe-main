@@ -77,6 +77,18 @@ const adSchema = new mongoose.Schema(
       min: 0,
       max: 100000000000000,
     },
+    installments: {
+      type: Number,
+      required: false,
+      min: 0,
+      max: 1000,
+    },
+    total: {
+      type: Number,
+      required: false,
+      min: 0,
+      max: 100000000000000,
+    },
     tax: {
       type: String,
       required: true,
