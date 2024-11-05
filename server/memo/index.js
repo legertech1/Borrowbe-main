@@ -10,9 +10,9 @@ module.exports = {
   find: (id) => {
     return memo[id];
   },
-  insert: (id) => {
+  insert: (id, exclude) => {
     if (!memo[id]) {
-      counts.visits++;
+      !exclude && counts.visits++;
       memo[id] = {};
     }
   },

@@ -22,7 +22,7 @@ const createEmailHtml = require("../utils/createEmailHtml");
 const createZendeskTick = require("../utils/zendesk");
 router.get("/init", function (req, res) {
   if (!req.cookies.connection_id) {
-    createConnectionId(res);
+    createConnectionId(res, req.cookies.exclude);
   }
 
   res.send({ acknowledged: true });

@@ -45,7 +45,7 @@ router.get("/ad/:id", async (req, res) => {
     if (key) {
       record = memo.find(key);
       if (!record) {
-        record = memo.find(createConnectionId(res));
+        record = memo.find(createConnectionId(res, req.cookies.exclude));
       }
     }
     if (req.cookies.auth) {
@@ -155,6 +155,9 @@ router.post("/post-ad", authorize, async (req, res) => {
     listing.meta.hash = createHash(listing.meta._doc);
     listing.config.hash = createHash(listing.config);
     listing.location.hash = createHash(listing.location);
+    if (/borrowbe\.com/i.test(req.user.email)) {
+      listing.marked = true;
+    }
 
     await listing.save();
 
@@ -371,7 +374,7 @@ router.post("/search", async (req, res) => {
       if (key) {
         record = memo.find(key);
         if (!record) {
-          record = memo.find(createConnectionId(res));
+          record = memo.find(createConnectionId(res, req.cookies.exclude));
         }
       }
       if (req.cookies.auth) {
@@ -382,7 +385,7 @@ router.post("/search", async (req, res) => {
     }
     const { results, total, page } = await search({
       ...req.body,
-      count: req.body.impressions ? true : false,
+      count: req.body.impressions && !req.cookies.exclude ? true : false,
       select: {
         thumbnails: 1,
         _id: 1,

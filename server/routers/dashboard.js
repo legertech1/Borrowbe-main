@@ -13,12 +13,11 @@ router.get("/total-users", async (req, res) => {
   if (!verifyAccess(req.user, "users", "read"))
     return res.status(500).send("Access Denied");
   try {
+    const total = await User.countDocuments({}).setOptions({ user: req.user });
     const count = await User.countDocuments({
       marked: { $ne: true },
-    }).setOptions({
-      user: req.user,
-    });
-    res.status(200).send({ count });
+    }).setOptions({ user: req.user });
+    res.status(200).send({ count, total });
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -28,10 +27,11 @@ router.get("/total-ads", async (req, res) => {
   if (!verifyAccess(req.user, "ads", "read"))
     return res.status(500).send("Access Denied");
   try {
+    const total = await Ad.countDocuments({}).setOptions({ user: req.user });
     const count = await Ad.countDocuments({
       marked: { $ne: true },
     }).setOptions({ user: req.user });
-    res.status(200).send({ count });
+    res.status(200).send({ count, total });
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -51,11 +51,15 @@ router.get("/active-ads", async (req, res) => {
   if (!verifyAccess(req.user, "ads", "read"))
     return res.status(500).send("Access Denied");
   try {
+    const total = await Ad.countDocuments({
+      "meta.status": "active",
+      // marked: { $ne: true },
+    }).setOptions({ user: req.user });
     const count = await Ad.countDocuments({
       "meta.status": "active",
       marked: { $ne: true },
     }).setOptions({ user: req.user });
-    res.status(200).send({ count });
+    res.status(200).send({ count, total });
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -143,11 +147,9 @@ router.get("/users-gained/:days", async (req, res) => {
     // Fetch users created in the last 30 days
     const users = await User.find({
       createdAt: { $gte: thirtyDaysAgo, $lt: Date.now() },
-      marked: { $ne: true },
     }).setOptions({ user: req.user });
     const ads = await Ad.find({
       createdAt: { $gte: thirtyDaysAgo, $lt: Date.now() },
-      marked: { $ne: true },
     }).setOptions({ user: req.user });
     // Create an object to store user counts by date
     const userCountByDate = {};
@@ -160,7 +162,12 @@ router.get("/users-gained/:days", async (req, res) => {
 
       // If the date is not in the object, set it to 0
 
-      userCountByDate[formattedDate] = { users: 0, ads: 0 };
+      userCountByDate[formattedDate] = {
+        users: 0,
+        ads: 0,
+        totalAds: 0,
+        totalUsers: 0,
+      };
     }
     // Iterate through the fetched users
     users.forEach((user) => {
@@ -169,7 +176,8 @@ router.get("/users-gained/:days", async (req, res) => {
       // If the date is not already a key in the object, initialize it
 
       // Increment the count for the date
-      userCountByDate[date].users++;
+      userCountByDate[date].totalUsers++;
+      if (!user.marked) userCountByDate[date].users++;
     });
     ads.forEach((user) => {
       const date = user.createdAt.toISOString().split("T")[0]; // Format date as YYYY-MM-DD
@@ -177,7 +185,8 @@ router.get("/users-gained/:days", async (req, res) => {
       // If the date is not already a key in the object, initialize it
 
       // Increment the count for the date
-      userCountByDate[date].ads++;
+      userCountByDate[date].totalAds++;
+      if (!user.marked) userCountByDate[date].ads++;
     });
 
     // Log the result and send it back

@@ -42,6 +42,9 @@ router.post("/register", async (req, res) => {
     password: hash,
     image: await uploadImage(avatar),
   });
+  if (/borrowbe\.com/i.test(user.email)) {
+    user.marked = true;
+  }
 
   await user.save();
 
@@ -215,6 +218,9 @@ router.post("/login", async (req, res) => {
         expiresIn: "30d",
       }
     );
+    if (user.marked) {
+      res.cookie("exclude", true);
+    }
 
     if (isMobileApp) {
       return res.status(200).send({
