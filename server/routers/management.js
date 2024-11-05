@@ -87,11 +87,10 @@ router.delete("/:id", async (req, res) => {
 
 router.post("/search", async (req, res) => {
   try {
-    const { filters, count, collectionName, page, sort } = req.body; // Added 'page' parameter
+    const { filters, count, collectionName, page, sort } = req.body;
 
     const limit = count || 10;
-    const pageNumber = page || 1; // Added 'page' parameter
-
+    const pageNumber = page || 1;
     let collection = null;
 
     switch (collectionName) {

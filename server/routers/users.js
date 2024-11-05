@@ -22,7 +22,7 @@ const createEmailHtml = require("../utils/createEmailHtml");
 const createZendeskTick = require("../utils/zendesk");
 router.get("/init", function (req, res) {
   if (!req.cookies.connection_id) {
-    createConnectionId(res);
+    createConnectionId(res, req.cookies.exclude);
   }
 
   res.send({ acknowledged: true });
@@ -203,7 +203,7 @@ router.put("/update-business-info/:id", async (req, res) => {
     return res.status(401).send({ error: errors["unauthorized"] });
   let logo = req.user.BusinessInfo?.LOGO || "";
 
-  if (logo != req.body.LOGO) {
+  if (logo != req.body.LOGO && req.body.LOGO) {
     logo = await uploadImage(req.body.LOGO);
     deleteImage(req.user.BusinessInfo?.LOGO);
   } else if (!req.body.LOGO) {

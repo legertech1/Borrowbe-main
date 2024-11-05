@@ -25,7 +25,6 @@ let state = {};
 let toCount = {};
 const test = {
   assignCustomerIDs: async () => {
-    console.log("start");
     const ads = await Ad.find({});
     ads.forEach(async (ad) => {
       user = await User?.findOne({ _id: ad?.user });
@@ -34,9 +33,21 @@ const test = {
       // console.log(ad);
       await ad.save();
     });
-    console.log("done");
   },
-
+  markUsersAndAds: async function () {
+    console.log("marking internal objects");
+    const users = (
+      await User.find({
+        email: { $regex: /borrowbe\.com/, $options: "i" },
+      })
+    ).map((u, i) => {
+      console.log(i + ". ", u.email);
+      return u._id;
+    });
+    await User.updateMany({ _id: { $in: users } }, { marked: true });
+    await Ad.updateMany({ user: { $in: users } }, { marked: true });
+    console.log("marked succesfully");
+  },
   randomMetaUpdater: async () => {
     console.log("update");
     const ads = await Ad.find({});
@@ -436,6 +447,7 @@ async function updateAnalytics(data, tries = 0) {
     }
   }
 }
+
 // schedule.scheduleJob("0 0 0 * * *", updateAds);
 // schedule.scheduleJob("0 0 0 * * *", updateStats);
 schedule.scheduleJob("*/30 * * * *", () => {
@@ -445,6 +457,7 @@ schedule.scheduleJob("*/30 * * * *", () => {
 schedule.scheduleJob("*/2 * * * *", () => {
   memo.clearUsers();
 });
-// schedule.scheduleJob("*/5 * * * *", () => {
-//   updateAnalytics();
-// });
+schedule.scheduleJob("*/5 * * * *", () => {
+  updateAnalytics();
+});
+// updateStats();
