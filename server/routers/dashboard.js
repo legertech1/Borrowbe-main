@@ -142,7 +142,9 @@ router.get("/users-gained/:days", async (req, res) => {
     const today = new Date();
     // today.setHours(0, 0, 0, 0);
     const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - Math.min(req.params.days || 7, 60));
+    thirtyDaysAgo.setDate(
+      today.getDate() - Math.min(req.params.days || 7, 180)
+    );
 
     // Fetch users created in the last 30 days
     const users = await User.find({
@@ -155,7 +157,7 @@ router.get("/users-gained/:days", async (req, res) => {
     const userCountByDate = {};
 
     // Fill in dates with zero if no users were created that day
-    for (let i = Math.min(req.params.days || 7, 60); i >= 0; i--) {
+    for (let i = Math.min(req.params.days || 7, 180); i >= 0; i--) {
       const dateKey = new Date(today);
       dateKey.setDate(today.getDate() - i);
       const formattedDate = dateKey.toISOString().split("T")[0];
@@ -203,13 +205,15 @@ router.get("/search-analytics/:days", async (req, res) => {
     const today = new Date();
     // today.setHours(0, 0, 0, 0);
     const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - Math.min(req.params.days || 7, 60));
+    thirtyDaysAgo.setDate(
+      today.getDate() - Math.min(req.params.days || 7, 180)
+    );
     const stats = await Analytics.find({
       date: { $gte: thirtyDaysAgo, $lt: Date.now() },
     }).setOptions({ user: req.user });
 
     const data = {};
-    for (let i = Math.min(req.params.days || 7, 60); i >= 0; i--) {
+    for (let i = Math.min(req.params.days || 7, 180); i >= 0; i--) {
       const dateKey = new Date(today);
       dateKey.setDate(today.getDate() - i);
       const formattedDate = dateKey.toISOString().split("T")[0];
