@@ -593,6 +593,7 @@ router.post("/facebookMobile", async (req, res) => {
       firstName: facebookUserData.first_name,
       lastName: facebookUserData.last_name,
       verified: true,
+      appleUserID,
       image: facebookUserData.picture?.data?.url,
     });
 
