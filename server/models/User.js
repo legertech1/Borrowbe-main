@@ -89,6 +89,7 @@ const userSchema = new mongoose.Schema(
     },
     lastName: { type: String },
     email: { type: String, required: true, unique: true },
+    appleUserID: { type: String },
     password: { type: String },
     verified: { type: Boolean, required: true, default: false },
     authenticationRisk: { type: Number, required: true, default: 0 },

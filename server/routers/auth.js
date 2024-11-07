@@ -531,7 +531,7 @@ router.get("/facebook/callback", async (req, res) => {
   }
 });
 router.post("/facebookMobile", async (req, res) => {
-  const { authenticationToken, platform } = req.body;
+  const { authenticationToken, platform, appleUserID } = req.body;
   try {
     let facebookUserData;
     if (platform == "ios") {
@@ -567,9 +567,12 @@ router.post("/facebookMobile", async (req, res) => {
       facebookUserData = data;
     }
 
-    if (!facebookUserData.email)
+    if (!facebookUserData.email || !appleUserID)
       return res.status(401).json({ error: "please provide email access" });
     console.log("facebookUserData", facebookUserData);
+    const query = {};
+    if (facebookUserData.email) query.email = facebookUserData.email;
+    else query.appleUserID = facebookUserData.appleUserID;
 
     let user = await User.findOne({ email: facebookUserData.email });
 
