@@ -567,7 +567,7 @@ router.post("/facebookMobile", async (req, res) => {
       facebookUserData = data;
     }
 
-    if (!facebookUserData.email || !appleUserID)
+    if (!facebookUserData.email && !appleUserID)
       return res.status(401).json({ error: "please provide email access" });
     console.log("facebookUserData", facebookUserData);
     const query = {};
