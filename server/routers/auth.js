@@ -554,7 +554,7 @@ router.post("/facebookMobile", async (req, res) => {
       );
 
       if (!tokenData.data || !tokenData.data.is_valid) {
-        return res.status(401).json({ error: "Invalid Facebook access token" });
+        return res.status(401).json({ error: "Invalid  access token" });
       }
 
       // Step 2: Retrieve user data from Facebook using the accessToken
@@ -566,6 +566,9 @@ router.post("/facebookMobile", async (req, res) => {
       });
       facebookUserData = data;
     }
+
+    if (!facebookUserData.email)
+      return res.status(401).json({ error: "please provide email access" });
     console.log("facebookUserData", facebookUserData);
 
     let user = await User.findOne({ email: facebookUserData.email });
