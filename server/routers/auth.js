@@ -574,7 +574,7 @@ router.post("/facebookMobile", async (req, res) => {
     if (facebookUserData.email) query.email = facebookUserData.email;
     else query.appleUserID = facebookUserData.appleUserID;
 
-    let user = await User.findOne({ email: facebookUserData.email });
+    let user = await User.findOne(query);
 
     if (user && user._id) {
       const authorizationToken = jwt.sign(
