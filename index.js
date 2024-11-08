@@ -22,6 +22,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const memo = require("./server/memo");
 const { default: mongoose } = require("mongoose");
+const { verifyAppleToken } = require("./server/utils/appleLogin");
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {

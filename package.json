@@ -20,6 +20,7 @@
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.1",
     "juice": "^10.0.0",
+    "jwks-rsa": "^3.1.0",
     "mongoose": "^7.4.3",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.4",
@@ -61,5 +62,4 @@
       "last 1 safari version"
     ]
   }
- 
 }
