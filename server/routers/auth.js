@@ -13,6 +13,7 @@ const memo = require("../memo");
 const { default: axios } = require("axios");
 const createEmailHtml = require("../utils/createEmailHtml");
 const sendNotification = require("../utils/sendNotification");
+const { verifyAppleToken } = require("../utils/appleLogin");
 
 router.post("/register", async (req, res) => {
   //get the fields
@@ -531,7 +532,7 @@ router.get("/facebook/callback", async (req, res) => {
   }
 });
 router.post("/facebookMobile", async (req, res) => {
-  const { authenticationToken, platform, appleUserID } = req.body;
+  const { authenticationToken, platform } = req.body;
   try {
     let facebookUserData;
     if (platform == "ios") {
@@ -567,14 +568,7 @@ router.post("/facebookMobile", async (req, res) => {
       facebookUserData = data;
     }
 
-    if (!facebookUserData.email && !appleUserID)
-      return res.status(401).json({ error: "please provide email access" });
-    console.log("facebookUserData", facebookUserData);
-    const query = {};
-    if (facebookUserData.email) query.email = facebookUserData.email;
-    else query.appleUserID = facebookUserData.appleUserID;
-
-    let user = await User.findOne(query);
+    let user = await User.findOne({ email: facebookUserData.email });
 
     if (user && user._id) {
       const authorizationToken = jwt.sign(
@@ -593,7 +587,6 @@ router.post("/facebookMobile", async (req, res) => {
       firstName: facebookUserData.first_name,
       lastName: facebookUserData.last_name,
       verified: true,
-      appleUserID,
       image: facebookUserData.picture?.data?.url,
     });
 
@@ -617,6 +610,68 @@ router.post("/facebookMobile", async (req, res) => {
       error?.response?.data || error
     );
     res.status(500).json({ error: "Failed to authenticate with Facebook" });
+  }
+});
+
+router.post("/appleMobile", async (req, res) => {
+  const body = req.body;
+  try {
+    const tokenData = await verifyAppleToken({
+      ...body,
+      clientId: "com.borrowbe.borrowbe",
+    });
+    console.log({ tokenData });
+    if (!tokenData.email && !tokenData.sub)
+      return res.status(401).json({ error: "Invalid access token" });
+    const query = {};
+    if (tokenData.email) query.email = tokenData.email;
+    else query.appleUserID = tokenData.appleUserID;
+
+    let user = await User.findOne(query);
+
+    if (user && user._id) {
+      const authorizationToken = jwt.sign(
+        { id: user._id, time: Date.now() },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+      return res.status(200).send({
+        token: authorizationToken,
+      });
+    }
+    const avatar = createAvatar(
+      body.fullName.givenName + " " + body.fullName.familyName
+    );
+    user = new User({
+      customerID: await generateID("C"),
+      email: tokenData.email,
+      firstName: body.fullName.givenName,
+      lastName: body.fullName.familyName,
+      verified: true,
+      appleUserID: tokenData.sub,
+      image: await uploadImage(avatar),
+    });
+
+    user.options = { key: process.env.SYS_PASSKEY };
+
+    await user.save();
+
+    // Generate JWT for the new user
+    const authorizationToken = jwt.sign(
+      { id: user._id, time: Date.now() },
+      process.env.JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    return res.status(200).send({
+      token: authorizationToken,
+    });
+  } catch (error) {
+    console.error(
+      "apple authentication error:",
+      error?.response?.data || error
+    );
+    res.status(500).json({ error: "Failed to authenticate with apple" });
   }
 });
 module.exports = router;
