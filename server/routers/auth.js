@@ -625,11 +625,13 @@ router.post("/appleMobile", async (req, res) => {
       return res.status(401).json({ error: "Invalid access token" });
     const query = {};
     if (tokenData.email) query.email = tokenData.email;
-    else query.appleUserID = tokenData.appleUserID;
-
+    else query.appleUserID = tokenData.sub;
+    console.log("query", query);
     let user = await User.findOne(query);
 
     if (user && user._id) {
+      user.appleUserID = tokenData.sub;
+      await user.save();
       const authorizationToken = jwt.sign(
         { id: user._id, time: Date.now() },
         process.env.JWT_SECRET,
