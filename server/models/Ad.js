@@ -97,6 +97,14 @@ const adSchema = new mongoose.Schema(
         message: "invalid tax value",
       },
     },
+    type: {
+      type: String,
+      required: true,
+      validate: {
+        validator: (v) => ["Rent", "Lease", "Finance", "Service"],
+        message: "invalid ad type value",
+      },
+    },
     term: {
       type: String,
       validate: {

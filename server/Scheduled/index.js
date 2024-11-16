@@ -16,10 +16,9 @@ const { Category } = require("../models/Category");
 const { Analytics } = require("../models/Analytics");
 const countUserAds = require("../utils/countUserAds");
 const dayConstant = 1000 * 60 * 60 * 24;
-const errors = require("../utils/errors.json");
+
 const processTransactions = require("../utils/processTransactions");
 const { batchSize } = require("../../serverConstants");
-const { updateOne } = require("../models/Counter");
 
 let state = {};
 let toCount = {};
@@ -48,6 +47,32 @@ const test = {
     await Ad.updateMany({ user: { $in: users } }, { marked: true });
     console.log("marked succesfully");
   },
+  randomiseRankings: async (filter) => {
+    console.log("randomising rankings with filter " + filter);
+    const ads = await Ad.find(filter);
+    const updates = ads.map((ad) => {
+      // Generate a random ranking and hash for each ad
+      const newRanking =
+        Date.now() - 1000000 + Math.ceil(Math.random() * 1000000);
+      const newHash = createHash({ ...ad.meta, listingRank: newRanking });
+
+      return {
+        updateOne: {
+          filter: { _id: ad._id },
+          update: {
+            $set: {
+              "meta.listingRank": newRanking,
+              "meta.hash": newHash,
+            },
+          },
+        },
+      };
+    });
+    if (updates.length > 0) {
+      await Ad.bulkWrite(updates);
+    }
+    console.log("operation completed");
+  },
   randomMetaUpdater: async () => {
     console.log("update");
     const ads = await Ad.find({});
@@ -73,6 +98,9 @@ const test = {
           update: {
             meta: ad.meta,
             priceHidden: !Boolean(Math.floor(Math.random() * 5)),
+            type: ["Rent", "Lease", "Finance", "Service"][
+              Math.floor(Math.random() * 4)
+            ],
           },
         },
       });
@@ -450,14 +478,13 @@ async function updateAnalytics(data, tries = 0) {
 
 // schedule.scheduleJob("0 0 0 * * *", updateAds);
 // schedule.scheduleJob("0 0 0 * * *", updateStats);
-schedule.scheduleJob("*/30 * * * *", () => {
-  memo.clear();
-  memo.clearVerificationCodes();
-});
-schedule.scheduleJob("*/2 * * * *", () => {
-  memo.clearUsers();
-});
-schedule.scheduleJob("*/5 * * * *", () => {
-  updateAnalytics();
-});
-// updateStats();
+// schedule.scheduleJob("*/30 * * * *", () => {
+//   memo.clear();
+//   memo.clearVerificationCodes();
+// });
+// schedule.scheduleJob("*/2 * * * *", () => {
+//   memo.clearUsers();
+// });
+// schedule.scheduleJob("*/5 * * * *", () => {
+//   updateAnalytics();
+// });

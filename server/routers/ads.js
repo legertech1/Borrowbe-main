@@ -123,9 +123,11 @@ router.post("/post-ad", authorize, async (req, res) => {
     const cart = { ...payment.cart };
 
     const priceObj = {};
-    if (ad.price) priceObj.price = Number(ad.price || 0);
-    if (ad.installments) priceObj.installments = Number(ad.installments || 0);
-    if (ad.total) priceObj.total = Number(ad.total || 0);
+    if (ad.price && !ad.priceHidden) priceObj.price = Number(ad.price || 0);
+    if (ad.installments && !ad.priceHidden)
+      priceObj.installments = Number(ad.installments || 0);
+    if (ad.total && !ad.priceHidden) priceObj.total = Number(ad.total || 0);
+
     const listingMetaData = createListingMeta(category, payment, req.body.ad);
     sendUpdate("post-ad", "2", req.user._id);
     const listing = new Ad({
@@ -152,6 +154,7 @@ router.post("/post-ad", authorize, async (req, res) => {
       status: "active",
       meta: { ...listingMetaData },
       config: { current: cart, next: payment.cart },
+
       ...priceObj,
     });
 
@@ -408,6 +411,7 @@ router.post("/search", async (req, res) => {
         priceHidden: 1,
         installments: 1,
         total: 1,
+        type: 1,
       },
       country: req.country,
     });
