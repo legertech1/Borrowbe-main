@@ -47,26 +47,6 @@ const deleteArchive = (ids) => {
   });
 };
 
-router.put("/update-packages/:id", async (req, res) => {
-  try {
-    const category = await Category.findOneAndUpdate(
-      { _id: req.params.id },
-      {
-        "pricing.Basic": req.body.Basic,
-        "pricing.Standard": req.body.Standard,
-        "pricing.Premium": req.body.Premium,
-      },
-      { new: true }
-    ).setOptions({
-      user: req.user,
-    });
-    res.send(category);
-    categoryUpdate(category);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
 router.get("/", async (req, res) => {
   try {
     const categories = await Category.find({
@@ -90,7 +70,25 @@ router.get("/", async (req, res) => {
 });
 
 router.use(authorize);
-
+router.put("/update-packages/:id", async (req, res) => {
+  try {
+    const category = await Category.findOneAndUpdate(
+      { _id: req.params.id },
+      {
+        "pricing.Basic": req.body.Basic,
+        "pricing.Standard": req.body.Standard,
+        "pricing.Premium": req.body.Premium,
+      },
+      { new: true }
+    ).setOptions({
+      user: req.user,
+    });
+    res.send(category);
+    categoryUpdate(category);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 router.get("/data", async (req, res) => {
   try {
     res.send(
