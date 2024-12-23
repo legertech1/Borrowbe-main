@@ -139,6 +139,7 @@ const adSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 adSchema.pre("save", async function () {
   try {
     if (this.isNew) {

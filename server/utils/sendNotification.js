@@ -99,7 +99,7 @@ const sendFCMNotification = async (rawTokens, { title, body }) => {
         },
       };
 
-      let r = await admin.messaging().sendMulticast(payload);
+      let r = await admin.messaging().sendEachForMulticast(payload);
       console.log("r: ", r);
 
       return r;

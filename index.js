@@ -7,11 +7,10 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URI,
-
       process.env.MANAGEMENT_URI,
       process.env.BLOG_URI,
-      ,
       process.env.MOBILE_FRONTEND_URI,
+      "http://localhost:3001",
     ],
     credentials: true,
   })
@@ -32,6 +31,7 @@ const io = new Server(httpServer, {
       process.env.FRONTEND_URI,
       process.env.MANAGEMENT_URI,
       process.env.MOBILE_FRONTEND_URI,
+      "http://localhost:3001",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"], // List all methods explicitly
     credentials: true,
